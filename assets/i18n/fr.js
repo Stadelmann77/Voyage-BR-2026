@@ -150,6 +150,7 @@ const fr = {
   'transport.preauthCard':   'sur carte.',
   'transport.cancelInfo':    'Annulation gratuite >48h. No-show = 30%.',
   'transport.appHint':       '💡 Téléchargez l\'app <strong>Localiza FAST</strong> pour la prise en charge digitale sans comptoir.',
+  'transport.preauthWarning': '⚠️ <strong>À payer à la prise du véhicule.</strong> Pré-autorisation R$ {amount} sur carte. Annulation gratuite >48h. No-show = 30%.',
 
   // ── Pages — Payments ─────────────────────────────────────────
   'page.payments.title':    '💰 Paiements par personne',

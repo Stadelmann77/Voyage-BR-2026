@@ -123,6 +123,10 @@
     import { t } from './assets/i18n.js';
 
     async function loadDashboard() {
+      // Alerts and itinerary use hardcoded data — always render them
+      renderAlerts();
+      renderItinerary();
+
       try {
         const [
           { data: travellers },
@@ -151,7 +155,7 @@
         }
 
         // Badges
-        if (flights) document.getElementById('flights-badge').textContent = `${flights.length} ${t('nav.flights').replace(/^[^ ]+ /, '')}`;
+        if (flights) document.getElementById('flights-badge').textContent = `${flights.length} ${t('dash.flights')}`;
         if (lodgings) document.getElementById('lodgings-badge').textContent = `${lodgings.length} ${t('dash.lodgings')}`;
         if (checklist) {
           const done = checklist.filter(c => c.done).length;
@@ -161,12 +165,6 @@
           const totalChf = payments.reduce((s, p) => s + (p.price_chf || 0), 0);
           document.getElementById('payments-badge').textContent = `~${Math.round(totalChf)} CHF`;
         }
-
-        // Alerts
-        renderAlerts();
-
-        // Itinerary
-        renderItinerary();
 
       } catch (err) {
         console.error(err);

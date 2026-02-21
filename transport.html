@@ -111,8 +111,7 @@
 
           <div style="margin-top:1rem">
             <div class="alert alert-warning">
-              ${t('transport.payOnPickup')} ${t('transport.preauth')} R$ ${item.preauth_brl != null ? Number(item.preauth_brl).toLocaleString('pt-BR') : '2 500'} ${t('transport.preauthCard')}
-              ${t('transport.cancelInfo')}
+              ${t('transport.preauthWarning').replace('{amount}', item.preauth_brl != null ? Number(item.preauth_brl).toLocaleString('pt-BR') : '2 500')}
             </div>
             <div class="alert alert-info">${t('transport.appHint')}</div>
           </div>

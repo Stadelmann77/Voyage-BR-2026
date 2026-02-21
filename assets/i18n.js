@@ -40,17 +40,15 @@ export function setLang(newLang) {
 /**
  * Replace textContent / placeholder of all [data-i18n] and
  * [data-i18n-placeholder] elements, then update toggle button state.
+ *
+ * Keys whose translated value contains HTML tags use innerHTML;
+ * all others use textContent (safe default).
  */
 export function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.dataset.i18n;
-    const val = t(key);
-    // If the element contains only text (no child elements), replace textContent.
-    // If it has HTML markup children (e.g. <code>), use innerHTML for those keys
-    // that are known to contain markup (config error messages).
-    if (key.startsWith('error.config.') || key.startsWith('contacts.emergency') ||
-        key.startsWith('lodgings.missing') || key.startsWith('transport.payOnPickup') ||
-        key.startsWith('transport.appHint')) {
+    const val = t(el.dataset.i18n);
+    // Use innerHTML only when the translation itself contains markup
+    if (val.includes('<')) {
       el.innerHTML = val;
     } else {
       el.textContent = val;

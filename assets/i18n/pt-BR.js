@@ -150,6 +150,7 @@ const ptBR = {
   'transport.preauthCard':   'no cartão.',
   'transport.cancelInfo':    'Cancelamento gratuito >48h. No-show = 30%.',
   'transport.appHint':       '💡 Baixe o app <strong>Localiza FAST</strong> para retirada digital sem balcão.',
+  'transport.preauthWarning': '⚠️ <strong>A pagar na retirada do veículo.</strong> Pré-autorização R$ {amount} no cartão. Cancelamento gratuito >48h. No-show = 30%.',
 
   // ── Pages — Payments ─────────────────────────────────────────
   'page.payments.title':    '💰 Pagamentos por pessoa',
