@@ -6,30 +6,35 @@
   <title>Contacts — Voyage Brésil 2026</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📞</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
 </head>
 <body>
   <nav>
     <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
     <div class="nav-links">
-      <a href="index.html">🏠 Accueil</a>
-      <a href="flights.html">✈️ Vols</a>
-      <a href="lodgings.html">🏨 Hébergements</a>
-      <a href="transport.html">🚗 Transport</a>
-      <a href="payments.html">💰 Paiements</a>
-      <a href="contacts.html">📞 Contacts</a>
-      <a href="checklist.html">✅ Checklist</a>
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
     </div>
     <div class="nav-spacer"></div>
-    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
   </nav>
 
   <main>
     <div class="page-header">
-      <h1>📞 Contacts & Adresses</h1>
-      <p>Compagnies aériennes, hôtels, location voiture, urgences Brésil.</p>
+      <h1 data-i18n="page.contacts.title">📞 Contacts & Adresses</h1>
+      <p data-i18n="page.contacts.subtitle">Compagnies aériennes, hôtels, location voiture, urgences Brésil.</p>
     </div>
 
-    <div class="alert alert-warning" style="margin-bottom:1.5rem">
+    <div class="alert alert-warning" style="margin-bottom:1.5rem" data-i18n="contacts.emergency.alert">
       🚨 <strong>Urgences Brésil:</strong> Police 190 · SAMU (ambulance) 192 · Pompiers 193 · Ambassade Suisse +55 61 3443 5500
     </div>
 
@@ -39,19 +44,20 @@
   </main>
 
   <footer>
-    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
   </footer>
 
-  <script src="assets/config.js"></script>
+  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
     import { fetchContacts, showError, showLoading, escHtml } from './assets/public.js';
+    import { t } from './assets/i18n.js';
 
     const CATEGORIES = {
-      airlines:  { label: '✈️ Compagnies aériennes', ids: ['C1','C2','C3','C4'] },
-      hotels:    { label: '🏨 Hôtels & Hébergements', ids: ['C5','C6','C7','C8','C15'] },
-      transport: { label: '🚗 Location voiture', ids: ['C9'] },
-      emergency: { label: '🚨 Urgences Brésil', ids: ['C10','C11','C12','C13'] },
-      personal:  { label: '👤 Personnel', ids: ['C14'] },
+      airlines:  { key: 'contacts.cat.airlines',  ids: ['C1','C2','C3','C4'] },
+      hotels:    { key: 'contacts.cat.hotels',    ids: ['C5','C6','C7','C8','C15'] },
+      transport: { key: 'contacts.cat.transport', ids: ['C9'] },
+      emergency: { key: 'contacts.cat.emergency', ids: ['C10','C11','C12','C13'] },
+      personal:  { key: 'contacts.cat.personal',  ids: ['C14'] },
     };
 
     async function loadContacts() {
@@ -62,13 +68,13 @@
         const contacts = await fetchContacts();
         renderContacts(contacts, container);
       } catch (err) {
-        showError(container, err.message);
+        showError(container, err.message, err.stack);
       }
     }
 
     function renderContacts(contacts, container) {
       if (!contacts || contacts.length === 0) {
-        container.innerHTML = '<div class="alert alert-info">Aucun contact trouvé.</div>';
+        container.innerHTML = `<div class="alert alert-info">${t('contacts.noData')}</div>`;
         return;
       }
 
@@ -82,10 +88,10 @@
         if (catContacts.length === 0) continue;
 
         html += `<div class="card">
-          <h2>${cat.label}</h2>
+          <h2>${t(cat.key)}</h2>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Organisme</th><th>Téléphone</th><th>Adresse / Web</th><th>Notes</th></tr></thead>
+              <thead><tr><th>${t('th.contact.org')}</th><th>${t('th.contact.phone')}</th><th>${t('th.contact.address')}</th><th>${t('th.contact.notes')}</th></tr></thead>
               <tbody>
                 ${catContacts.map(c => `<tr>
                   <td><strong>${escHtml(c.organization)}</strong></td>
@@ -112,10 +118,10 @@
       const uncategorized = contacts.filter(c => !categorized.includes(c.id));
       if (uncategorized.length > 0) {
         html += `<div class="card">
-          <h2>📋 Autres contacts</h2>
+          <h2>${t('contacts.cat.other')}</h2>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Organisme</th><th>Téléphone</th><th>Adresse / Web</th><th>Notes</th></tr></thead>
+              <thead><tr><th>${t('th.contact.org')}</th><th>${t('th.contact.phone')}</th><th>${t('th.contact.address')}</th><th>${t('th.contact.notes')}</th></tr></thead>
               <tbody>
                 ${uncategorized.map(c => `<tr>
                   <td><strong>${escHtml(c.organization)}</strong></td>
@@ -133,6 +139,11 @@
     }
 
     loadContacts();
+
+    document.addEventListener('langchange', () => {
+      const c = document.getElementById('contacts-container');
+      if (c && !c.querySelector('.alert')) loadContacts();
+    });
   </script>
 </body>
 </html>

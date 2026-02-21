@@ -3,6 +3,7 @@
 
 import { fetchFlights, escHtml, fmtDate, fmtAmt, statusBadge } from './public.js';
 import { FUNCTIONS_URL } from './supabaseClient.js';
+import { t } from './i18n.js';
 
 let globeInstance = null;
 let surpriseUnlocked = sessionStorage.getItem('surprise_unlocked') === 'true';
@@ -36,12 +37,15 @@ async function loadFlights() {
     renderFlightsTable(allFlights, tbody);
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="11"><div class="alert alert-danger">⚠️ ${escHtml(err.message)}</div></td></tr>`;
+    if (new URLSearchParams(location.search).get('debug') === '1') {
+      console.error('[flights] fetch error:', err);
+    }
   }
 }
 
 function renderFlightsTable(flights, tbody) {
   if (!flights || flights.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-light)">Aucun vol trouvé.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-light)">${t('flights.noData')}</td></tr>`;
     return;
   }
 
@@ -57,7 +61,7 @@ function renderFlightsTable(flights, tbody) {
       <td>${fmtDate(f.dep_date)}<br><small>${escHtml(f.dep_time || '')}</small></td>
       <td>${fmtDate(f.arr_date)}<br><small>${escHtml(f.arr_time || '')}</small></td>
       <td><small>${escHtml(f.cabin_baggage)}</small><br><small>${escHtml(f.hold_baggage)}</small></td>
-      <td><small>${escHtml(f.seats || 'Non sél.')}</small></td>
+      <td><small>${escHtml(f.seats || t('flights.seats.short'))}</small></td>
       <td><small>${escHtml(f.booking_ref)}</small></td>
       <td>${fmtAmt(f.price_chf, f.price_brl)}</td>
       <td>${statusBadge(f.payment_status)}</td>
@@ -71,7 +75,7 @@ function renderFlightsTable(flights, tbody) {
           data-dlat="${f.destination?.lat || ''}"
           data-dlon="${f.destination?.lon || ''}"
           data-flight='${JSON.stringify({ id: f.id, route: f.route, company: f.company, booking_ref: f.booking_ref, dep_date: f.dep_date, dep_time: f.dep_time, arr_date: f.arr_date, arr_time: f.arr_time, class: f.class, seats: f.seats, cabin_baggage: f.cabin_baggage, hold_baggage: f.hold_baggage, pax_count: f.pax_count, notes: f.notes }).replace(/'/g, "&#39;")}'>
-          🌍 Globe
+          🌍 ${t('th.flight.globe')}
         </button>
       </td>
     </tr>`;
@@ -140,16 +144,16 @@ function closeGlobeModal() {
 function renderFlightDetails(f) {
   if (!f) return '';
   return `<dl>
-    <dt>Référence</dt><dd>${escHtml(f.booking_ref)}</dd>
-    <dt>Compagnie</dt><dd>${escHtml(f.company)}</dd>
-    <dt>Classe</dt><dd>${escHtml(f.class)}</dd>
-    <dt>Départ</dt><dd>${fmtDate(f.dep_date)} ${escHtml(f.dep_time || '')}</dd>
-    <dt>Arrivée</dt><dd>${fmtDate(f.arr_date)} ${escHtml(f.arr_time || '')}</dd>
-    <dt>Bagage cabine</dt><dd>${escHtml(f.cabin_baggage)}</dd>
-    <dt>Bagage soute</dt><dd>${escHtml(f.hold_baggage)}</dd>
-    <dt>Sièges</dt><dd>${escHtml(f.seats || 'Non sélectionnés')}</dd>
-    <dt>Pax</dt><dd>${escHtml(String(f.pax_count || 1))}</dd>
-    ${f.notes ? `<dt>Notes</dt><dd>${escHtml(f.notes)}</dd>` : ''}
+    <dt>${t('globe.ref')}</dt><dd>${escHtml(f.booking_ref)}</dd>
+    <dt>${t('globe.company')}</dt><dd>${escHtml(f.company)}</dd>
+    <dt>${t('globe.class')}</dt><dd>${escHtml(f.class)}</dd>
+    <dt>${t('globe.dep')}</dt><dd>${fmtDate(f.dep_date)} ${escHtml(f.dep_time || '')}</dd>
+    <dt>${t('globe.arr')}</dt><dd>${fmtDate(f.arr_date)} ${escHtml(f.arr_time || '')}</dd>
+    <dt>${t('globe.cabinBag')}</dt><dd>${escHtml(f.cabin_baggage)}</dd>
+    <dt>${t('globe.holdBag')}</dt><dd>${escHtml(f.hold_baggage)}</dd>
+    <dt>${t('globe.seats')}</dt><dd>${escHtml(f.seats || t('flights.seats.none'))}</dd>
+    <dt>${t('globe.pax')}</dt><dd>${escHtml(String(f.pax_count || 1))}</dd>
+    ${f.notes ? `<dt>${t('globe.notes')}</dt><dd>${escHtml(f.notes)}</dd>` : ''}
   </dl>`;
 }
 
@@ -160,7 +164,7 @@ function initGlobe(origin, dest) {
   container.innerHTML = ''; // clear previous
 
   if (!window.Globe) {
-    container.innerHTML = '<div style="color:#fff;display:flex;align-items:center;justify-content:center;height:100%;font-size:.9rem">Chargement du globe…</div>';
+    container.innerHTML = `<div style="color:#fff;display:flex;align-items:center;justify-content:center;height:100%;font-size:.9rem">${t('flights.globe.loading')}</div>`;
     // globe.gl is loaded from CDN in flights.html; wait a moment
     const check = setInterval(() => {
       if (window.Globe) {
@@ -246,14 +250,14 @@ function setupSurprisePin() {
         await loadFlights(); // reload to include surprise flights
       } else {
         const err = document.getElementById('surprise-pin-error');
-        if (err) err.textContent = '❌ PIN incorrect. Réessayez.';
+        if (err) err.textContent = t('flights.surprise.wrongPin');
       }
     } catch (_) {
       const err = document.getElementById('surprise-pin-error');
-      if (err) err.textContent = '❌ Erreur réseau.';
+      if (err) err.textContent = t('flights.surprise.netErr');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Déverrouiller';
+      btn.textContent = t('flights.surprise.btn');
     }
   });
 }
@@ -263,6 +267,6 @@ function showSurpriseSection() {
   const banner  = document.getElementById('surprise-banner');
   if (content) content.classList.add('visible');
   if (banner) {
-    banner.innerHTML = '<h2>⭐ Section Surprise déverrouillée!</h2><p>Les vols et éléments surprises sont maintenant visibles.</p>';
+    banner.innerHTML = `<h2>${t('flights.surprise.unlocked')}</h2><p>${t('flights.surprise.unlocked.desc')}</p>`;
   }
 }

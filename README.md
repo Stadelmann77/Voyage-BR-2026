@@ -75,6 +75,35 @@ window.SUPABASE_ANON = 'YOUR_ANON_KEY_HERE';
 
 ---
 
+## 🌐 Changement de langue
+
+Le site supporte **Français (FR)** et **Português-BR (PT)**.
+
+- Cliquez sur les boutons **FR** / **PT** dans la barre de navigation pour changer la langue.
+- Le choix est persisté dans `localStorage` et s'applique à toutes les pages.
+- La langue par défaut est le **Français**.
+
+---
+
+## 🔧 Dépannage
+
+### Spinners infinis / données non chargées
+
+Si les pages affichent des spinners infinis ou un bandeau d'erreur de configuration:
+
+1. **`assets/config.js` manquant** — Copiez `assets/config.example.js` → `assets/config.js` et remplissez vos clés Supabase.
+2. **Clés placeholder** — Vérifiez que `SUPABASE_URL` et `SUPABASE_ANON` ne contiennent plus les valeurs d'exemple.
+3. **Fichier servi localement** — Ouvrez directement `index.html` ne fonctionne pas (modules ES). Utilisez `npx serve .` ou `python -m http.server`.
+4. **Erreurs RLS** — Vérifiez que les politiques RLS dans Supabase autorisent la lecture publique (anon) pour les tables utilisées.
+
+### Mode débogage
+
+Ajoutez `?debug=1` à n'importe quelle URL pour afficher des détails d'erreur supplémentaires (stack trace, payload de réponse) dans une section dépliable sous les messages d'erreur.
+
+Exemple: `https://stadelmann77.github.io/Voyage-BR-2026/flights.html?debug=1`
+
+---
+
 ## 🔐 Sécurité
 
 - **Clé anon Supabase** uniquement dans le frontend (publique par design, protégée par RLS).
@@ -101,7 +130,11 @@ Voyage-BR-2026/
 │   ├── config.js            # ⚠️ Gitignored — vos clés Supabase
 │   ├── supabaseClient.js    # Client Supabase + URL fonctions
 │   ├── styles.css           # Styles globaux
-│   ├── public.js            # Helpers partagés (fetch, render)
+│   ├── public.js            # Helpers partagés (fetch, render, erreurs)
+│   ├── i18n.js              # Module i18n — t(), setLang(), toggle
+│   ├── i18n/
+│   │   ├── fr.js            # Traductions françaises
+│   │   └── pt-BR.js         # Traductions portugaises (BR)
 │   ├── flights.js           # Globe 3D + surprise PIN
 │   ├── checklist.js         # Checklist PIN-protégée
 │   └── admin.js             # Admin CRUD

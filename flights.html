@@ -6,6 +6,7 @@
   <title>Vols — Voyage Brésil 2026</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
   <!-- globe.gl CDN (depends on Three.js) -->
   <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
   <script src="https://unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
@@ -14,37 +15,41 @@
   <nav>
     <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
     <div class="nav-links">
-      <a href="index.html">🏠 Accueil</a>
-      <a href="flights.html">✈️ Vols</a>
-      <a href="lodgings.html">🏨 Hébergements</a>
-      <a href="transport.html">🚗 Transport</a>
-      <a href="payments.html">💰 Paiements</a>
-      <a href="contacts.html">📞 Contacts</a>
-      <a href="checklist.html">✅ Checklist</a>
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
     </div>
     <div class="nav-spacer"></div>
-    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
   </nav>
 
   <main>
     <div class="page-header">
-      <h1>✈️ Vols</h1>
-      <p>7 vols planifiés — cliquez sur 🌍 Globe pour visualiser la route en 3D.</p>
+      <h1 data-i18n="page.flights.title">✈️ Vols</h1>
+      <p data-i18n="page.flights.subtitle">7 vols planifiés — cliquez sur 🌍 Globe pour visualiser la route en 3D.</p>
     </div>
 
     <!-- Surprise PIN section -->
     <div class="surprise-banner" id="surprise-banner">
-      <h2>⭐ Section Surprise</h2>
-      <p>Entrez le PIN pour déverrouiller les éléments cachés.</p>
+      <h2 data-i18n="flights.surprise.title">⭐ Section Surprise</h2>
+      <p data-i18n="flights.surprise.hint">Entrez le PIN pour déverrouiller les éléments cachés.</p>
       <form class="pin-form" id="surprise-pin-form">
         <input type="password" class="pin-input" id="surprise-pin-input" placeholder="PIN" maxlength="20" autocomplete="off">
-        <button type="submit" class="btn btn-accent">Déverrouiller</button>
+        <button type="submit" class="btn btn-accent" data-i18n="flights.surprise.btn">Déverrouiller</button>
       </form>
       <div id="surprise-pin-error" style="margin-top:.5rem;font-size:.85rem"></div>
     </div>
 
     <div id="surprise-content" class="surprise-content">
-      <div class="alert alert-success">⭐ Section surprise déverrouillée — les vols cachés sont maintenant affichés.</div>
+      <div class="alert alert-success" data-i18n="flights.surprise.unlocked.msg">⭐ Section surprise déverrouillée — les vols cachés sont maintenant affichés.</div>
     </div>
 
     <!-- Flights table -->
@@ -54,17 +59,17 @@
         <table>
           <thead>
             <tr>
-              <th>N°</th>
-              <th>Passager(s)</th>
-              <th>Route / Compagnie</th>
-              <th>Départ</th>
-              <th>Arrivée</th>
-              <th>Bagages</th>
-              <th>Sièges</th>
-              <th>Réf.</th>
-              <th>Prix</th>
-              <th>Statut</th>
-              <th>Globe</th>
+              <th data-i18n="th.flight.num">N°</th>
+              <th data-i18n="th.flight.pax">Passager(s)</th>
+              <th data-i18n="th.flight.route">Route / Compagnie</th>
+              <th data-i18n="th.flight.dep">Départ</th>
+              <th data-i18n="th.flight.arr">Arrivée</th>
+              <th data-i18n="th.flight.baggage">Bagages</th>
+              <th data-i18n="th.flight.seats">Sièges</th>
+              <th data-i18n="th.flight.ref">Réf.</th>
+              <th data-i18n="th.flight.price">Prix</th>
+              <th data-i18n="th.flight.status">Statut</th>
+              <th data-i18n="th.flight.globe">Globe</th>
             </tr>
           </thead>
           <tbody id="flights-tbody">
@@ -80,7 +85,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <span id="globe-title">🌍 Route</span>
-        <button class="modal-close" id="globe-close" aria-label="Fermer">✕</button>
+        <button class="modal-close" id="globe-close" data-i18n-aria-label="globe.close.label" aria-label="Fermer">✕</button>
       </div>
       <div id="globe-container"></div>
       <div class="modal-footer" id="globe-footer"></div>
@@ -88,10 +93,10 @@
   </div>
 
   <footer>
-    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
   </footer>
 
-  <script src="assets/config.js"></script>
+  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module" src="assets/flights.js"></script>
 </body>
 </html>

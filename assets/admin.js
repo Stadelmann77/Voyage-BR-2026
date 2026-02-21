@@ -3,6 +3,7 @@
 
 import { supabase } from './supabaseClient.js';
 import { escHtml, fmtDate, fmtAmt } from './public.js';
+import { t } from './i18n.js';
 
 let currentUser = null;
 
