@@ -3,6 +3,7 @@
 
 import { fetchChecklist, showError, showLoading, escHtml, fmtDate } from './public.js';
 import { FUNCTIONS_URL } from './supabaseClient.js';
+import { t } from './i18n.js';
 
 let checklistPin = '';
 let userName = '';
@@ -32,11 +33,11 @@ function setupPinBar() {
     userName     = nameInput?.value?.trim() || '';
 
     if (!checklistPin || !userName) {
-      alert('Veuillez entrer votre PIN et votre nom.');
+      alert(t('checklist.needPin'));
       return;
     }
 
-    saveBtn.textContent = '✅ Prêt';
+    saveBtn.textContent = t('checklist.unlock.done');
     saveBtn.disabled = true;
 
     // Enable all checkboxes
@@ -60,13 +61,13 @@ async function loadChecklist() {
 
     renderChecklist(allItems, container);
   } catch (err) {
-    showError(container, err.message);
+    showError(container, err.message, err.stack);
   }
 }
 
 function renderChecklist(items, container) {
   if (!items || items.length === 0) {
-    container.innerHTML = '<div class="alert alert-info">Aucun élément dans la checklist.</div>';
+    container.innerHTML = `<div class="alert alert-info">${t('checklist.noData')}</div>`;
     return;
   }
 
@@ -97,7 +98,7 @@ function renderChecklist(items, container) {
       const doneClass = item.done ? 'done-item' : '';
       const surprise  = item.is_surprise ? '⭐ ' : '';
       const doneBy    = item.done && item.done_by
-        ? `<div class="item-done-by">✅ Fait par ${escHtml(item.done_by)}${item.done_at ? ' le ' + new Date(item.done_at).toLocaleDateString('fr-CH') : ''}</div>`
+        ? `<div class="item-done-by">${t('checklist.doneBy')} ${escHtml(item.done_by)}${item.done_at ? ' ' + t('checklist.doneOn') + ' ' + new Date(item.done_at).toLocaleDateString('fr-CH') : ''}</div>`
         : '';
 
       html += `<div class="checklist-item ${doneClass}" id="item-wrapper-${item.id}">
@@ -134,7 +135,7 @@ async function handleToggle(e) {
 
   if (!checklistPin || !userName) {
     cb.checked = !done; // revert
-    alert('Veuillez entrer votre PIN et votre nom dans la barre en haut.');
+    alert(t('checklist.needPinBar'));
     return;
   }
 
@@ -160,7 +161,7 @@ async function handleToggle(e) {
             doneByEl.className = 'item-done-by';
             wrapper.querySelector('.item-body').appendChild(doneByEl);
           }
-          doneByEl.textContent = `✅ Fait par ${userName}`;
+          doneByEl.textContent = `${t('checklist.doneBy')} ${userName}`;
         } else {
           wrapper.classList.remove('done-item');
           const doneByEl = wrapper.querySelector('.item-done-by');
@@ -169,11 +170,11 @@ async function handleToggle(e) {
       }
     } else {
       cb.checked = !done; // revert
-      alert(`❌ ${json.error || 'Erreur lors de la mise à jour.'}`);
+      alert(`❌ ${json.error || t('checklist.err.update')}`);
     }
   } catch (err) {
     cb.checked = !done;
-    alert('❌ Erreur réseau. Réessayez.');
+    alert(t('checklist.err.network'));
   } finally {
     cb.disabled = false;
   }

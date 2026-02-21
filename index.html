@@ -6,76 +6,87 @@
   <title>Voyage Brésil 2026 🇧🇷</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇧🇷</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
 </head>
 <body>
   <nav>
     <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
     <div class="nav-links">
-      <a href="index.html">🏠 Accueil</a>
-      <a href="flights.html">✈️ Vols</a>
-      <a href="lodgings.html">🏨 Hébergements</a>
-      <a href="transport.html">🚗 Transport</a>
-      <a href="payments.html">💰 Paiements</a>
-      <a href="contacts.html">📞 Contacts</a>
-      <a href="checklist.html">✅ Checklist</a>
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
     </div>
     <div class="nav-spacer"></div>
-    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
   </nav>
 
   <main>
     <div class="page-header">
-      <h1>🌎 Tableau de bord — Voyage Brésil 2026</h1>
-      <p>Bienvenue! Retrouvez ici toutes les informations de votre voyage.</p>
+      <h1 data-i18n="page.index.title">🌎 Tableau de bord — Voyage Brésil 2026</h1>
+      <p data-i18n="page.index.subtitle">Bienvenue! Retrouvez ici toutes les informations de votre voyage.</p>
     </div>
 
     <!-- Trip summary cards -->
     <div class="dashboard-grid">
       <a class="dash-card" href="flights.html">
         <div class="icon">✈️</div>
-        <h3>Vols</h3>
-        <p>7 vols planifiés</p>
+        <h3 data-i18n="dash.flights">Vols</h3>
+        <p data-i18n="dash.flights.desc">7 vols planifiés</p>
         <span class="badge" id="flights-badge">…</span>
       </a>
       <a class="dash-card" href="lodgings.html">
         <div class="icon">🏨</div>
-        <h3>Hébergements</h3>
-        <p>5 établissements</p>
+        <h3 data-i18n="dash.lodgings">Hébergements</h3>
+        <p data-i18n="dash.lodgings.desc">5 établissements</p>
         <span class="badge" id="lodgings-badge">…</span>
       </a>
       <a class="dash-card" href="transport.html">
         <div class="icon">🚗</div>
-        <h3>Transport</h3>
-        <p>Location voiture</p>
+        <h3 data-i18n="dash.transport">Transport</h3>
+        <p data-i18n="dash.transport.desc">Location voiture</p>
         <span class="badge" id="transport-badge">Localiza</span>
       </a>
       <a class="dash-card" href="payments.html">
         <div class="icon">💰</div>
-        <h3>Paiements</h3>
-        <p>Résumé par personne</p>
+        <h3 data-i18n="dash.payments">Paiements</h3>
+        <p data-i18n="dash.payments.desc">Résumé par personne</p>
         <span class="badge" id="payments-badge">…</span>
       </a>
       <a class="dash-card" href="contacts.html">
         <div class="icon">📞</div>
-        <h3>Contacts</h3>
-        <p>Hôtels, compagnies, urgences</p>
+        <h3 data-i18n="dash.contacts">Contacts</h3>
+        <p data-i18n="dash.contacts.desc">Hôtels, compagnies, urgences</p>
         <span class="badge">15 contacts</span>
       </a>
       <a class="dash-card" href="checklist.html">
         <div class="icon">✅</div>
-        <h3>Checklist</h3>
-        <p>Actions avant départ</p>
+        <h3 data-i18n="dash.checklist">Checklist</h3>
+        <p data-i18n="dash.checklist.desc">Actions avant départ</p>
         <span class="badge" id="checklist-badge">…</span>
       </a>
     </div>
 
     <!-- Travellers -->
     <div class="card" style="margin-top:2rem">
-      <h2>👥 Voyageurs</h2>
+      <h2 data-i18n="dash.travellers">👥 Voyageurs</h2>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Nom</th><th>Rôle</th><th>Début voyage</th><th>Fin voyage</th><th>Retour</th></tr>
+            <tr>
+              <th data-i18n="th.traveller.name">Nom</th>
+              <th data-i18n="th.traveller.role">Rôle</th>
+              <th data-i18n="th.traveller.start">Début voyage</th>
+              <th data-i18n="th.traveller.end">Fin voyage</th>
+              <th data-i18n="th.traveller.return">Retour</th>
+            </tr>
           </thead>
           <tbody id="travellers-tbody">
             <tr><td colspan="5" class="loading-center"><div class="spinner"></div></td></tr>
@@ -86,7 +97,7 @@
 
     <!-- Alerts -->
     <div class="card">
-      <h2>⚠️ Alertes & Actions urgentes</h2>
+      <h2 data-i18n="dash.alerts">⚠️ Alertes & Actions urgentes</h2>
       <div id="alerts-container">
         <div class="loading-center"><div class="spinner"></div></div>
       </div>
@@ -94,7 +105,7 @@
 
     <!-- Itinerary overview -->
     <div class="card">
-      <h2>📅 Itinéraire résumé</h2>
+      <h2 data-i18n="dash.itinerary">📅 Itinéraire résumé</h2>
       <div id="itinerary-container">
         <div class="loading-center"><div class="spinner"></div></div>
       </div>
@@ -102,13 +113,14 @@
   </main>
 
   <footer>
-    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
   </footer>
 
-  <script src="assets/config.js"></script>
+  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
     import { supabase } from './assets/supabaseClient.js';
     import { fmtDate, escHtml, statusBadge } from './assets/public.js';
+    import { t } from './assets/i18n.js';
 
     async function loadDashboard() {
       try {
@@ -129,18 +141,18 @@
         // Travellers
         const tbody = document.getElementById('travellers-tbody');
         if (travellers) {
-          tbody.innerHTML = travellers.map(t => `<tr>
-            <td><strong>${escHtml(t.name)}</strong></td>
-            <td>${escHtml(t.role)}</td>
-            <td>${fmtDate(t.trip_start)}</td>
-            <td>${t.trip_end ? fmtDate(t.trip_end) : '<em>en cours</em>'}</td>
-            <td>${escHtml(t.return_by)}</td>
+          tbody.innerHTML = travellers.map(tr => `<tr>
+            <td><strong>${escHtml(tr.name)}</strong></td>
+            <td>${escHtml(tr.role)}</td>
+            <td>${fmtDate(tr.trip_start)}</td>
+            <td>${tr.trip_end ? fmtDate(tr.trip_end) : `<em>${t('traveller.ongoing')}</em>`}</td>
+            <td>${escHtml(tr.return_by)}</td>
           </tr>`).join('');
         }
 
         // Badges
-        if (flights) document.getElementById('flights-badge').textContent = `${flights.length} vols`;
-        if (lodgings) document.getElementById('lodgings-badge').textContent = `${lodgings.length} hôtels`;
+        if (flights) document.getElementById('flights-badge').textContent = `${flights.length} ${t('nav.flights').replace(/^[^ ]+ /, '')}`;
+        if (lodgings) document.getElementById('lodgings-badge').textContent = `${lodgings.length} ${t('dash.lodgings')}`;
         if (checklist) {
           const done = checklist.filter(c => c.done).length;
           document.getElementById('checklist-badge').textContent = `${done}/${checklist.length}`;
@@ -158,6 +170,8 @@
 
       } catch (err) {
         console.error(err);
+        const tbody = document.getElementById('travellers-tbody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="alert alert-danger">⚠️ ${escHtml(err.message)}</div></td></tr>`;
       }
     }
 
@@ -217,6 +231,12 @@
     }
 
     loadDashboard();
+
+    // Re-render on language change (badges use translated labels)
+    document.addEventListener('langchange', () => {
+      const tbody = document.getElementById('travellers-tbody');
+      if (tbody && !tbody.querySelector('.alert')) loadDashboard();
+    });
   </script>
 </body>
 </html>

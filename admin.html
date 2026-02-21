@@ -6,45 +6,50 @@
   <title>Admin — Voyage Brésil 2026</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
 </head>
 <body>
   <nav>
     <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
     <div class="nav-links">
-      <a href="index.html">🏠 Accueil</a>
-      <a href="flights.html">✈️ Vols</a>
-      <a href="lodgings.html">🏨 Hébergements</a>
-      <a href="transport.html">🚗 Transport</a>
-      <a href="payments.html">💰 Paiements</a>
-      <a href="contacts.html">📞 Contacts</a>
-      <a href="checklist.html">✅ Checklist</a>
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
     </div>
     <div class="nav-spacer"></div>
-    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
   </nav>
 
   <main>
     <div class="page-header">
-      <h1>⚙️ Administration</h1>
-      <p>Gestion des données — accès réservé à l'administrateur.</p>
+      <h1 data-i18n="page.admin.title">⚙️ Administration</h1>
+      <p data-i18n="page.admin.subtitle">Gestion des données — accès réservé à l'administrateur.</p>
     </div>
 
     <!-- Login form -->
     <div id="admin-login" style="display:none">
       <div class="card" style="max-width:420px;margin:0 auto">
-        <h2>🔐 Connexion Admin</h2>
-        <p style="color:var(--text-light);font-size:.9rem;margin-bottom:1.25rem">Connectez-vous avec votre compte Supabase Admin.</p>
+        <h2 data-i18n="admin.login.title">🔐 Connexion Admin</h2>
+        <p style="color:var(--text-light);font-size:.9rem;margin-bottom:1.25rem" data-i18n="admin.login.subtitle">Connectez-vous avec votre compte Supabase Admin.</p>
         <form id="login-form">
           <div class="form-group">
-            <label for="admin-email">Email</label>
+            <label for="admin-email" data-i18n="admin.login.email">Email</label>
             <input type="email" id="admin-email" placeholder="admin@example.com" required autocomplete="username">
           </div>
           <div class="form-group">
-            <label for="admin-pass">Mot de passe</label>
+            <label for="admin-pass" data-i18n="admin.login.pass">Mot de passe</label>
             <input type="password" id="admin-pass" placeholder="••••••••" required autocomplete="current-password">
           </div>
           <div id="login-error" class="alert alert-danger" style="display:none;margin-bottom:.75rem"></div>
-          <button type="submit" class="btn btn-primary" style="width:100%">Se connecter</button>
+          <button type="submit" class="btn btn-primary" style="width:100%" data-i18n="admin.login.btn">Se connecter</button>
         </form>
       </div>
     </div>
@@ -53,18 +58,18 @@
     <div id="admin-panel" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem">
         <div class="alert alert-success" style="margin:0">
-          ✅ Connecté en tant que <strong id="admin-user"></strong>
+          <span data-i18n="admin.connected">✅ Connecté en tant que</span> <strong id="admin-user"></strong>
         </div>
-        <button class="btn btn-outline btn-sm" id="logout-btn">Se déconnecter</button>
+        <button class="btn btn-outline btn-sm" id="logout-btn" data-i18n="admin.logout">Se déconnecter</button>
       </div>
 
       <!-- Tab nav -->
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
-        <button class="btn btn-primary admin-tab-btn active" data-tab="flights">✈️ Vols</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="lodgings">🏨 Hébergements</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="transport">🚗 Transport</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="payments">💰 Paiements</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="checklist">✅ Checklist</button>
+        <button class="btn btn-primary admin-tab-btn active" data-tab="flights" data-i18n="admin.tab.flights">✈️ Vols</button>
+        <button class="btn btn-outline admin-tab-btn" data-tab="lodgings" data-i18n="admin.tab.lodgings">🏨 Hébergements</button>
+        <button class="btn btn-outline admin-tab-btn" data-tab="transport" data-i18n="admin.tab.transport">🚗 Transport</button>
+        <button class="btn btn-outline admin-tab-btn" data-tab="payments" data-i18n="admin.tab.payments">💰 Paiements</button>
+        <button class="btn btn-outline admin-tab-btn" data-tab="checklist" data-i18n="admin.tab.checklist">✅ Checklist</button>
       </div>
 
       <!-- Tab content -->
@@ -75,10 +80,10 @@
   </main>
 
   <footer>
-    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
   </footer>
 
-  <script src="assets/config.js"></script>
+  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module" src="assets/admin.js"></script>
 
   <script>

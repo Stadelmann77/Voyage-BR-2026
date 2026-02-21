@@ -4,9 +4,19 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-if (!window.SUPABASE_URL || !window.SUPABASE_ANON) {
+const PLACEHOLDER_URL  = 'https://YOUR_PROJECT_REF.supabase.co';
+const PLACEHOLDER_ANON = 'YOUR_ANON_KEY_HERE';
+
+/** True only when both config values are present and non-placeholder. */
+export const configOk =
+  !!window.SUPABASE_URL &&
+  window.SUPABASE_URL  !== PLACEHOLDER_URL &&
+  !!window.SUPABASE_ANON &&
+  window.SUPABASE_ANON !== PLACEHOLDER_ANON;
+
+if (!configOk) {
   console.error(
-    '[supabaseClient] SUPABASE_URL or SUPABASE_ANON not defined. ' +
+    '[supabaseClient] SUPABASE_URL or SUPABASE_ANON not defined or still placeholder. ' +
     'Copy assets/config.example.js → assets/config.js and fill in your values.',
   );
 }

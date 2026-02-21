@@ -6,30 +6,35 @@
   <title>Hébergements — Voyage Brésil 2026</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
 </head>
 <body>
   <nav>
     <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
     <div class="nav-links">
-      <a href="index.html">🏠 Accueil</a>
-      <a href="flights.html">✈️ Vols</a>
-      <a href="lodgings.html">🏨 Hébergements</a>
-      <a href="transport.html">🚗 Transport</a>
-      <a href="payments.html">💰 Paiements</a>
-      <a href="contacts.html">📞 Contacts</a>
-      <a href="checklist.html">✅ Checklist</a>
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
     </div>
     <div class="nav-spacer"></div>
-    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
   </nav>
 
   <main>
     <div class="page-header">
-      <h1>🏨 Hébergements</h1>
-      <p>5 établissements réservés sur le parcours Brésil 2026.</p>
+      <h1 data-i18n="page.lodgings.title">🏨 Hébergements</h1>
+      <p data-i18n="page.lodgings.subtitle">5 établissements réservés sur le parcours Brésil 2026.</p>
     </div>
 
-    <div class="alert alert-warning">
+    <div class="alert alert-warning" data-i18n="lodgings.missing.alert">
       ⚠️ <strong>Attention:</strong> Hébergement manquant pour les nuits du 30/05 au 01/06 et du 03/06 au 05/06 — à réserver d'urgence!
     </div>
 
@@ -39,12 +44,13 @@
   </main>
 
   <footer>
-    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
   </footer>
 
-  <script src="assets/config.js"></script>
+  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
     import { fetchLodgings, showError, showLoading, escHtml, fmtDate, fmtAmt, statusBadge } from './assets/public.js';
+    import { t } from './assets/i18n.js';
 
     async function loadLodgings() {
       const container = document.getElementById('lodgings-container');
@@ -54,13 +60,13 @@
         const lodgings = await fetchLodgings(false);
         renderLodgings(lodgings, container);
       } catch (err) {
-        showError(container, err.message);
+        showError(container, err.message, err.stack);
       }
     }
 
     function renderLodgings(lodgings, container) {
       if (!lodgings || lodgings.length === 0) {
-        container.innerHTML = '<div class="alert alert-info">Aucun hébergement trouvé.</div>';
+        container.innerHTML = `<div class="alert alert-info">${t('lodgings.noData')}</div>`;
         return;
       }
 
@@ -78,44 +84,44 @@
             <table>
               <tbody>
                 <tr>
-                  <td style="width:180px;font-weight:600;color:var(--text-light)">Voyageur(s)</td>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">${t('lodgings.travellers')}</td>
                   <td>${escHtml(h.travellers_desc)}</td>
-                  <td style="width:180px;font-weight:600;color:var(--text-light)">Chambre</td>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">${t('lodgings.room')}</td>
                   <td>${escHtml(h.room_type)}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600;color:var(--text-light)">Check-in</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.checkin')}</td>
                   <td>${fmtDate(h.checkin_date)} à ${escHtml(h.checkin_time || '—')}</td>
-                  <td style="font-weight:600;color:var(--text-light)">Check-out</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.checkout')}</td>
                   <td>${fmtDate(h.checkout_date)} à ${escHtml(h.checkout_time || '—')}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600;color:var(--text-light)">Nuits</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.nights')}</td>
                   <td>${escHtml(String(h.nights || '—'))}</td>
-                  <td style="font-weight:600;color:var(--text-light)">Petit-déjeuner</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.breakfast')}</td>
                   <td>${escHtml(h.breakfast || '—')}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600;color:var(--text-light)">Prix</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.price')}</td>
                   <td colspan="3">${fmtAmt(h.price_chf, h.price_brl)}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600;color:var(--text-light)">Annulation gratuite</td>
-                  <td>${h.free_cancellation_until ? 'Jusqu\'au ' + fmtDate(h.free_cancellation_until) : '—'}</td>
-                  <td style="font-weight:600;color:var(--text-light)">Réf. Confirmation</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.freeCancellation')}</td>
+                  <td>${h.free_cancellation_until ? t('lodgings.freeCancellationUntil') + ' ' + fmtDate(h.free_cancellation_until) : '—'}</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.ref')}</td>
                   <td><strong>${escHtml(h.booking_ref)}</strong></td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600;color:var(--text-light)">Parking</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.parking')}</td>
                   <td>${escHtml(h.parking || '—')}</td>
-                  <td style="font-weight:600;color:var(--text-light)">WiFi</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.wifi')}</td>
                   <td>${escHtml(h.wifi || '—')}</td>
                 </tr>
                 ${h.gps ? `<tr>
-                  <td style="font-weight:600;color:var(--text-light)">GPS</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('lodgings.gps')}</td>
                   <td colspan="3">
                     ${escHtml(h.gps)}
-                    ${h.lat && h.lon ? ` — <a href="https://www.google.com/maps?q=${h.lat},${h.lon}" target="_blank">📍 Maps</a>` : ''}
+                    ${h.lat && h.lon ? ` — <a href="https://www.google.com/maps?q=${h.lat},${h.lon}" target="_blank">${t('lodgings.maps')}</a>` : ''}
                   </td>
                 </tr>` : ''}
               </tbody>
@@ -126,6 +132,11 @@
     }
 
     loadLodgings();
+
+    document.addEventListener('langchange', () => {
+      const c = document.getElementById('lodgings-container');
+      if (c && !c.querySelector('.alert')) loadLodgings();
+    });
   </script>
 </body>
 </html>

@@ -6,31 +6,36 @@
   <title>Paiements — Voyage Brésil 2026</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
 </head>
 <body>
   <nav>
     <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
     <div class="nav-links">
-      <a href="index.html">🏠 Accueil</a>
-      <a href="flights.html">✈️ Vols</a>
-      <a href="lodgings.html">🏨 Hébergements</a>
-      <a href="transport.html">🚗 Transport</a>
-      <a href="payments.html">💰 Paiements</a>
-      <a href="contacts.html">📞 Contacts</a>
-      <a href="checklist.html">✅ Checklist</a>
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
     </div>
     <div class="nav-spacer"></div>
-    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
   </nav>
 
   <main>
     <div class="page-header">
-      <h1>💰 Paiements par personne</h1>
-      <p>Résumé des coûts et statuts de paiement pour chaque voyageur.</p>
+      <h1 data-i18n="page.payments.title">💰 Paiements par personne</h1>
+      <p data-i18n="page.payments.subtitle">Résumé des coûts et statuts de paiement pour chaque voyageur.</p>
     </div>
 
     <div class="alert alert-info" id="rate-info">
-      💱 Taux de change: 1 CHF = <span id="rate-value">6.7</span> BRL
+      <span data-i18n="payments.rate.prefix">💱 Taux de change: 1 CHF =</span> <span id="rate-value">6.7</span> <span data-i18n="payments.rate.suffix">BRL</span>
     </div>
 
     <div id="payments-container">
@@ -39,13 +44,14 @@
   </main>
 
   <footer>
-    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
   </footer>
 
-  <script src="assets/config.js"></script>
+  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
     import { fetchPayments, fetchTravellers, showError, showLoading, escHtml, statusBadge } from './assets/public.js';
     import { supabase } from './assets/supabaseClient.js';
+    import { t } from './assets/i18n.js';
 
     async function loadPayments() {
       const container = document.getElementById('payments-container');
@@ -64,13 +70,13 @@
 
         renderPayments(payments, travellers, container);
       } catch (err) {
-        showError(container, err.message);
+        showError(container, err.message, err.stack);
       }
     }
 
     function renderPayments(payments, travellers, container) {
       if (!payments || !travellers) {
-        container.innerHTML = '<div class="alert alert-info">Aucune donnée de paiement.</div>';
+        container.innerHTML = `<div class="alert alert-info">${t('payments.noData')}</div>`;
         return;
       }
 
@@ -84,8 +90,8 @@
 
       let html = '';
 
-      travellers.forEach(t => {
-        const tPayments = byTraveller[t.id] || [];
+      travellers.forEach(tv => {
+        const tPayments = byTraveller[tv.id] || [];
         if (tPayments.length === 0) return;
 
         const totalChf = tPayments.reduce((s, p) => s + (p.price_chf || 0), 0);
@@ -95,16 +101,23 @@
         html += `
           <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem">
             <div class="payment-person-header">
-              <span>👤 ${escHtml(t.name)} <span style="font-weight:400;opacity:.8">— ${escHtml(t.role)}</span></span>
+              <span>👤 ${escHtml(tv.name)} <span style="font-weight:400;opacity:.8">— ${escHtml(tv.role)}</span></span>
               <span style="font-size:.85rem">
-                Total: ${totalChf > 0 ? '<strong>' + totalChf.toLocaleString('fr-CH') + ' CHF</strong>' : ''}
+                ${t('payments.total.label')} ${totalChf > 0 ? '<strong>' + totalChf.toLocaleString('fr-CH') + ' CHF</strong>' : ''}
                 ${totalBrl > 0 ? ' + R$ ' + totalBrl.toLocaleString('pt-BR') : ''}
               </span>
             </div>
             <div class="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Catégorie</th><th>Détail</th><th>CHF</th><th>BRL</th><th>Statut</th><th>Notes</th></tr>
+                  <tr>
+                    <th>${t('th.payment.category')}</th>
+                    <th>${t('th.payment.detail')}</th>
+                    <th>${t('th.payment.chf')}</th>
+                    <th>${t('th.payment.brl')}</th>
+                    <th>${t('th.payment.status')}</th>
+                    <th>${t('th.payment.notes')}</th>
+                  </tr>
                 </thead>
                 <tbody>
                   ${tPayments.map(p => `<tr>
@@ -116,10 +129,10 @@
                     <td><small style="color:var(--text-light)">${escHtml(p.notes || '')}</small></td>
                   </tr>`).join('')}
                   <tr class="payment-total-row">
-                    <td colspan="2"><strong>SOUS-TOTAL ${escHtml(t.name).toUpperCase()}</strong></td>
+                    <td colspan="2"><strong>${t('payments.subtotal')} ${escHtml(tv.name).toUpperCase()}</strong></td>
                     <td><strong>${totalChf > 0 ? totalChf.toLocaleString('fr-CH') + ' CHF' : '—'}</strong></td>
                     <td><strong>${totalBrl > 0 ? 'R$ ' + totalBrl.toLocaleString('pt-BR') : '—'}</strong></td>
-                    <td colspan="2"><small style="color:var(--success)">Payé CHF: ${paidChf.toLocaleString('fr-CH')}</small></td>
+                    <td colspan="2"><small style="color:var(--success)">${t('payments.paidChf')} ${paidChf.toLocaleString('fr-CH')}</small></td>
                   </tr>
                 </tbody>
               </table>
@@ -137,24 +150,24 @@
 
       html += `
         <div class="card" style="border:2px solid var(--primary)">
-          <h2>💰 GRAND TOTAL ESTIMÉ</h2>
+          <h2>${t('payments.grandTotal')}</h2>
           <div class="table-wrap">
             <table>
               <tbody>
                 <tr>
-                  <td style="font-weight:600">Total CHF direct</td>
+                  <td style="font-weight:600">${t('payments.totalChf')}</td>
                   <td><strong>${grandTotalChf.toLocaleString('fr-CH')} CHF</strong></td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600">Total BRL</td>
+                  <td style="font-weight:600">${t('payments.totalBrl')}</td>
                   <td>R$ ${grandTotalBrl.toLocaleString('pt-BR')}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600">BRL → CHF (1 CHF = ${rate} BRL)</td>
+                  <td style="font-weight:600">${t('payments.brlToChf.prefix')} ${rate} ${t('payments.brlToChf.suffix')}</td>
                   <td>${brlInChf.toLocaleString('fr-CH', { maximumFractionDigits: 2 })} CHF</td>
                 </tr>
                 <tr style="background:#EFF6FF">
-                  <td style="font-weight:700;color:var(--primary)">💰 GRAND TOTAL ESTIMÉ</td>
+                  <td style="font-weight:700;color:var(--primary)">${t('payments.grandTotal')}</td>
                   <td style="font-weight:700;font-size:1.1rem;color:var(--primary)">${grandTotal.toLocaleString('fr-CH', { maximumFractionDigits: 2 })} CHF</td>
                 </tr>
               </tbody>
@@ -166,6 +179,11 @@
     }
 
     loadPayments();
+
+    document.addEventListener('langchange', () => {
+      const c = document.getElementById('payments-container');
+      if (c && !c.querySelector('.alert')) loadPayments();
+    });
   </script>
 </body>
 </html>

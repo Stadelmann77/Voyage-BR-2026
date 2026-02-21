@@ -1,7 +1,8 @@
 // assets/public.js
 // Shared helpers for all public pages: loading data from Supabase and rendering utilities.
 
-import { supabase } from './supabaseClient.js';
+import { supabase, configOk } from './supabaseClient.js';
+import { t } from './i18n.js';
 
 // ── Navigation active link ──────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,11 +10,54 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-links a').forEach(a => {
     if (a.getAttribute('href') === path) a.classList.add('active');
   });
+
+  // Show config error banner if Supabase is not configured
+  if (!configOk) {
+    showConfigBanner();
+  }
 });
 
+// ── Config error banner ─────────────────────────────────────
+export function showConfigBanner() {
+  if (document.getElementById('config-error-banner')) return; // already shown
+  const main = document.querySelector('main');
+  if (!main) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'config-error-banner';
+  banner.className = 'config-error-banner';
+  banner.innerHTML = `
+    <strong data-i18n="error.config.title">${t('error.config.title')}</strong>
+    <p data-i18n="error.config.msg">${t('error.config.msg')}</p>
+    <p><strong data-i18n="error.config.next">${t('error.config.next')}</strong></p>
+    <ol>
+      <li data-i18n="error.config.step1">${t('error.config.step1')}</li>
+      <li data-i18n="error.config.step2">${t('error.config.step2')}</li>
+      <li data-i18n="error.config.step3">${t('error.config.step3')}</li>
+    </ol>`;
+  main.insertBefore(banner, main.firstChild);
+}
+
 // ── Generic error display ───────────────────────────────────
-export function showError(container, msg) {
-  container.innerHTML = `<div class="alert alert-danger">⚠️ ${msg}</div>`;
+export function showError(container, msg, detail = null) {
+  const isDebug = new URLSearchParams(location.search).get('debug') === '1';
+  const hint = t('error.fetch.hint');
+
+  let html = `<div class="alert alert-danger">
+    <strong>${t('error.fetch.title')}</strong><br>
+    ${escHtml(msg)}<br>
+    <small style="color:var(--text-light)">${escHtml(hint)}</small>`;
+
+  if (isDebug && detail) {
+    const raw = typeof detail === 'string' ? detail : JSON.stringify(detail, null, 2);
+    html += `<details style="margin-top:.5rem">
+      <summary style="cursor:pointer">${t('error.fetch.debug')}</summary>
+      <pre style="white-space:pre-wrap;font-size:.8rem;margin-top:.5rem;max-height:200px;overflow:auto">${escHtml(raw)}</pre>
+    </details>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 // ── Loading placeholder ─────────────────────────────────────

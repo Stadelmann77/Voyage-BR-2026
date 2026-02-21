@@ -6,27 +6,32 @@
   <title>Transport — Voyage Brésil 2026</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
 </head>
 <body>
   <nav>
     <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
     <div class="nav-links">
-      <a href="index.html">🏠 Accueil</a>
-      <a href="flights.html">✈️ Vols</a>
-      <a href="lodgings.html">🏨 Hébergements</a>
-      <a href="transport.html">🚗 Transport</a>
-      <a href="payments.html">💰 Paiements</a>
-      <a href="contacts.html">📞 Contacts</a>
-      <a href="checklist.html">✅ Checklist</a>
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
     </div>
     <div class="nav-spacer"></div>
-    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
   </nav>
 
   <main>
     <div class="page-header">
-      <h1>🚗 Transport</h1>
-      <p>Location de voiture Localiza — SUV Automatique, 13 jours.</p>
+      <h1 data-i18n="page.transport.title">🚗 Transport</h1>
+      <p data-i18n="page.transport.subtitle">Location de voiture Localiza — SUV Automatique, 13 jours.</p>
     </div>
 
     <div id="transport-container">
@@ -35,12 +40,13 @@
   </main>
 
   <footer>
-    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
   </footer>
 
-  <script src="assets/config.js"></script>
+  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
     import { fetchTransport, showError, showLoading, escHtml, fmtDate, statusBadge } from './assets/public.js';
+    import { t } from './assets/i18n.js';
 
     async function loadTransport() {
       const container = document.getElementById('transport-container');
@@ -50,54 +56,54 @@
         const transport = await fetchTransport();
         renderTransport(transport, container);
       } catch (err) {
-        showError(container, err.message);
+        showError(container, err.message, err.stack);
       }
     }
 
     function renderTransport(items, container) {
       if (!items || items.length === 0) {
-        container.innerHTML = '<div class="alert alert-info">Aucun transport trouvé.</div>';
+        container.innerHTML = `<div class="alert alert-info">${t('transport.noData')}</div>`;
         return;
       }
 
-      container.innerHTML = items.map(t => `
+      container.innerHTML = items.map(item => `
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
             <div>
-              <h2>${escHtml(t.id)} — ${escHtml(t.vehicle)} · ${escHtml(t.agency)}</h2>
-              <p style="color:var(--text-light);font-size:.9rem">Conducteur: ${escHtml(t.driver)}</p>
+              <h2>${escHtml(item.id)} — ${escHtml(item.vehicle)} · ${escHtml(item.agency)}</h2>
+              <p style="color:var(--text-light);font-size:.9rem">${t('transport.driver')}: ${escHtml(item.driver)}</p>
             </div>
-            <div>${statusBadge(t.payment_status)}</div>
+            <div>${statusBadge(item.payment_status)}</div>
           </div>
 
           <div class="table-wrap" style="margin-top:1rem">
             <table>
               <tbody>
                 <tr>
-                  <td style="width:180px;font-weight:600;color:var(--text-light)">Début</td>
-                  <td>${fmtDate(t.start_date)} à ${escHtml(t.start_time || '—')}</td>
-                  <td style="width:180px;font-weight:600;color:var(--text-light)">Fin</td>
-                  <td>${fmtDate(t.end_date)} à ${escHtml(t.end_time || '—')}</td>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">${t('transport.start')}</td>
+                  <td>${fmtDate(item.start_date)} à ${escHtml(item.start_time || '—')}</td>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">${t('transport.end')}</td>
+                  <td>${fmtDate(item.end_date)} à ${escHtml(item.end_time || '—')}</td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600;color:var(--text-light)">Durée</td>
-                  <td>${escHtml(String(t.duration_days || '—'))} jours</td>
-                  <td style="font-weight:600;color:var(--text-light)">Réf. Réservation</td>
-                  <td><strong>${escHtml(t.booking_ref)}</strong></td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('transport.duration')}</td>
+                  <td>${escHtml(String(item.duration_days || '—'))} ${t('transport.durationUnit')}</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('transport.ref')}</td>
+                  <td><strong>${escHtml(item.booking_ref)}</strong></td>
                 </tr>
                 <tr>
-                  <td style="font-weight:600;color:var(--text-light)">Prix BRL</td>
-                  <td>R$ ${t.price_brl != null ? Number(t.price_brl).toLocaleString('pt-BR') : '—'}</td>
-                  <td style="font-weight:600;color:var(--text-light)">Pré-autorisation</td>
-                  <td>R$ ${t.preauth_brl != null ? Number(t.preauth_brl).toLocaleString('pt-BR') : '—'} (remb. après clôture)</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('transport.priceBrl')}</td>
+                  <td>R$ ${item.price_brl != null ? Number(item.price_brl).toLocaleString('pt-BR') : '—'}</td>
+                  <td style="font-weight:600;color:var(--text-light)">${t('transport.preauth')}</td>
+                  <td>R$ ${item.preauth_brl != null ? Number(item.preauth_brl).toLocaleString('pt-BR') : '—'} ${t('transport.preauthDetail')}</td>
                 </tr>
-                ${t.agency_address ? `<tr>
-                  <td style="font-weight:600;color:var(--text-light)">Adresse agence</td>
-                  <td colspan="3">${escHtml(t.agency_address)}</td>
+                ${item.agency_address ? `<tr>
+                  <td style="font-weight:600;color:var(--text-light)">${t('transport.address')}</td>
+                  <td colspan="3">${escHtml(item.agency_address)}</td>
                 </tr>` : ''}
-                ${t.notes ? `<tr>
-                  <td style="font-weight:600;color:var(--text-light)">Notes</td>
-                  <td colspan="3">${escHtml(t.notes)}</td>
+                ${item.notes ? `<tr>
+                  <td style="font-weight:600;color:var(--text-light)">${t('transport.notes')}</td>
+                  <td colspan="3">${escHtml(item.notes)}</td>
                 </tr>` : ''}
               </tbody>
             </table>
@@ -105,18 +111,21 @@
 
           <div style="margin-top:1rem">
             <div class="alert alert-warning">
-              ⚠️ <strong>À payer à la prise du véhicule.</strong> Pré-autorisation R$ ${t.preauth_brl != null ? Number(t.preauth_brl).toLocaleString('pt-BR') : '2 500'} sur carte.
-              Annulation gratuite >48h. No-show = 30%.
+              ${t('transport.payOnPickup')} ${t('transport.preauth')} R$ ${item.preauth_brl != null ? Number(item.preauth_brl).toLocaleString('pt-BR') : '2 500'} ${t('transport.preauthCard')}
+              ${t('transport.cancelInfo')}
             </div>
-            <div class="alert alert-info">
-              💡 Téléchargez l'app <strong>Localiza FAST</strong> pour la prise en charge digitale sans comptoir.
-            </div>
+            <div class="alert alert-info">${t('transport.appHint')}</div>
           </div>
         </div>
       `).join('');
     }
 
     loadTransport();
+
+    document.addEventListener('langchange', () => {
+      const c = document.getElementById('transport-container');
+      if (c && !c.querySelector('.alert')) loadTransport();
+    });
   </script>
 </body>
 </html>
