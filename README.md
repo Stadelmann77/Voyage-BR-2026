@@ -23,6 +23,30 @@ Site web interactif hébergé sur GitHub Pages pour organiser le voyage familial
 
 ---
 
+## 📴 Mode hors-ligne (CSV)
+
+Si `assets/config.js` est absent ou contient les valeurs placeholder, le site fonctionne **automatiquement en mode hors-ligne** : les données sont chargées depuis le fichier `BD source voyage BR 2026.csv` inclus dans le repo.
+
+### Ce qui fonctionne en mode hors-ligne
+
+| Page | Comportement |
+|------|-------------|
+| `index.html` | Affiche voyageurs + alertes + itinéraire depuis CSV |
+| `flights.html` | Liste des vols + globe 3D (coordonnées d'aéroports intégrées) |
+| `lodgings.html` | Tous les hébergements depuis CSV |
+| `transport.html` | Location voiture depuis CSV |
+| `contacts.html` | Tous les contacts depuis CSV |
+| `checklist.html` | Checklist avec état persisté dans `localStorage` (par appareil) |
+| `payments.html` | Message explicatif — totaux par personne nécessitent Supabase |
+
+Un bandeau **📴 Mode hors-ligne (CSV) — Supabase non configuré** s'affiche en haut de chaque page.
+
+### Activer Supabase plus tard
+
+Suivez les étapes de la section **⚙️ Configuration** ci-dessous pour activer la synchronisation temps réel, la checklist partagée et les paiements par personne.
+
+---
+
 ## ⚙️ Configuration
 
 ### 1. Créer votre projet Supabase
@@ -129,8 +153,9 @@ Voyage-BR-2026/
 │   ├── config.example.js    # Template de config (copier → config.js)
 │   ├── config.js            # ⚠️ Gitignored — vos clés Supabase
 │   ├── supabaseClient.js    # Client Supabase + URL fonctions
+│   ├── csvData.js           # Parser CSV + données hors-ligne (aéroports, checklist)
 │   ├── styles.css           # Styles globaux
-│   ├── public.js            # Helpers partagés (fetch, render, erreurs)
+│   ├── public.js            # Helpers partagés (fetch, render, erreurs) — routing online/offline
 │   ├── i18n.js              # Module i18n — t(), setLang(), toggle
 │   ├── i18n/
 │   │   ├── fr.js            # Traductions françaises
@@ -152,6 +177,8 @@ Voyage-BR-2026/
 ## 📊 Données source
 
 Les données initiales sont importées depuis `BD source voyage BR 2026.csv` via le seed SQL dans `supabase/schema.sql`.
+
+Ce même fichier CSV sert de source de données en **mode hors-ligne** : `assets/csvData.js` le parse automatiquement lorsque Supabase n'est pas configuré.
 
 ---
 

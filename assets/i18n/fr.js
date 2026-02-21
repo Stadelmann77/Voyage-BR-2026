@@ -208,6 +208,13 @@ const fr = {
   'checklist.err.update':    'Erreur lors de la mise à jour.',
   'checklist.err.network':   '❌ Erreur réseau. Réessayez.',
 
+  // ── Offline mode ─────────────────────────────────────────────
+  'offline.banner.title': '📴 Mode hors-ligne (CSV) — Supabase non configuré',
+  'offline.banner.msg':   'Les données sont chargées depuis le fichier CSV intégré. Toutes les pages sont accessibles en lecture.',
+  'offline.banner.hint':  'Pour activer la synchronisation temps réel et la checklist partagée, configurez Supabase (voir README).',
+  'offline.payments.msg': '💳 Les totaux de paiement par personne nécessitent une connexion Supabase. Configurez <code>assets/config.js</code> pour afficher ces données.',
+  'offline.checklist.hint': '📴 Mode hors-ligne — les cochages sont sauvegardés localement sur cet appareil (non partagés).',
+
   // ── Pages — Admin ────────────────────────────────────────────
   'page.admin.title':     '⚙️ Administration',
   'page.admin.subtitle':  'Gestion des données — accès réservé à l\'administrateur.',

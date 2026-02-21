@@ -118,8 +118,9 @@
 
   <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
-    import { supabase } from './assets/supabaseClient.js';
-    import { fmtDate, escHtml, statusBadge } from './assets/public.js';
+    import { supabase, configOk } from './assets/supabaseClient.js';
+    import { fetchTravellers, fetchFlights, fetchLodgings, fetchChecklist, showOfflineBanner, fmtDate, escHtml, statusBadge } from './assets/public.js';
+    import { loadCsvData } from './assets/csvData.js';
     import { t } from './assets/i18n.js';
 
     async function loadDashboard() {
@@ -128,19 +129,30 @@
       renderItinerary();
 
       try {
-        const [
-          { data: travellers },
-          { data: flights },
-          { data: lodgings },
-          { data: checklist },
-          { data: payments },
-        ] = await Promise.all([
-          supabase.from('travellers').select('*').order('id'),
-          supabase.from('flights').select('id,payment_status,is_surprise').eq('is_surprise', false),
-          supabase.from('lodgings').select('id,is_surprise').eq('is_surprise', false),
-          supabase.from('checklist_items').select('id,done,is_surprise').eq('is_surprise', false),
-          supabase.from('participants_payments').select('traveller_id,price_chf,price_brl,paid'),
-        ]);
+        let travellers, flights, lodgings, checklist, payments;
+
+        if (!configOk) {
+          // Offline mode: load from CSV
+          const csv = await loadCsvData();
+          travellers = csv.travellers;
+          flights    = csv.flights.filter(f => !f.is_surprise);
+          lodgings   = csv.lodgings.filter(l => !l.is_surprise);
+          checklist  = null; // checklist state comes from localStorage
+          payments   = null;
+        } else {
+          const results = await Promise.all([
+            supabase.from('travellers').select('*').order('id'),
+            supabase.from('flights').select('id,payment_status,is_surprise').eq('is_surprise', false),
+            supabase.from('lodgings').select('id,is_surprise').eq('is_surprise', false),
+            supabase.from('checklist_items').select('id,done,is_surprise').eq('is_surprise', false),
+            supabase.from('participants_payments').select('traveller_id,price_chf,price_brl,paid'),
+          ]);
+          travellers = results[0].data;
+          flights    = results[1].data;
+          lodgings   = results[2].data;
+          checklist  = results[3].data;
+          payments   = results[4].data;
+        }
 
         // Travellers
         const tbody = document.getElementById('travellers-tbody');
@@ -157,13 +169,23 @@
         // Badges
         if (flights) document.getElementById('flights-badge').textContent = `${flights.length} ${t('dash.flights')}`;
         if (lodgings) document.getElementById('lodgings-badge').textContent = `${lodgings.length} ${t('dash.lodgings')}`;
-        if (checklist) {
-          const done = checklist.filter(c => c.done).length;
-          document.getElementById('checklist-badge').textContent = `${done}/${checklist.length}`;
-        }
-        if (payments) {
-          const totalChf = payments.reduce((s, p) => s + (p.price_chf || 0), 0);
-          document.getElementById('payments-badge').textContent = `~${Math.round(totalChf)} CHF`;
+
+        if (!configOk) {
+          // Show localStorage-based checklist progress
+          const ls = JSON.parse(localStorage.getItem('checklist_state') || '{}');
+          const doneCount = Object.values(ls).filter(v => v && v.done).length;
+          const { DEFAULT_CHECKLIST } = await import('./assets/csvData.js');
+          document.getElementById('checklist-badge').textContent = `${doneCount}/${DEFAULT_CHECKLIST.length}`;
+          document.getElementById('payments-badge').textContent = '—';
+        } else {
+          if (checklist) {
+            const done = checklist.filter(c => c.done).length;
+            document.getElementById('checklist-badge').textContent = `${done}/${checklist.length}`;
+          }
+          if (payments) {
+            const totalChf = payments.reduce((s, p) => s + (p.price_chf || 0), 0);
+            document.getElementById('payments-badge').textContent = `~${Math.round(totalChf)} CHF`;
+          }
         }
 
       } catch (err) {

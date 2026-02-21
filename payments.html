@@ -50,12 +50,18 @@
   <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
     import { fetchPayments, fetchTravellers, showError, showLoading, escHtml, statusBadge } from './assets/public.js';
-    import { supabase } from './assets/supabaseClient.js';
+    import { supabase, configOk } from './assets/supabaseClient.js';
     import { t } from './assets/i18n.js';
 
     async function loadPayments() {
       const container = document.getElementById('payments-container');
       showLoading(container);
+
+      // Offline mode: show informational message
+      if (!configOk) {
+        container.innerHTML = `<div class="alert alert-info" data-i18n="offline.payments.msg">${t('offline.payments.msg')}</div>`;
+        return;
+      }
 
       try {
         const [payments, travellers, { data: params }] = await Promise.all([
@@ -183,6 +189,11 @@
     document.addEventListener('langchange', () => {
       const c = document.getElementById('payments-container');
       if (c && !c.querySelector('.alert')) loadPayments();
+      // In offline mode, re-translate the static offline message
+      if (!configOk && c) {
+        const msg = c.querySelector('[data-i18n="offline.payments.msg"]');
+        if (msg) msg.innerHTML = t('offline.payments.msg');
+      }
     });
   </script>
 </body>
