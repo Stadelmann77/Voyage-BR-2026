@@ -120,7 +120,7 @@
   <script type="module">
     import { supabase, configOk } from './assets/supabaseClient.js';
     import { fetchTravellers, fetchFlights, fetchLodgings, fetchChecklist, showOfflineBanner, fmtDate, escHtml, statusBadge } from './assets/public.js';
-    import { loadCsvData } from './assets/csvData.js';
+    import { loadCsvData, DEFAULT_CHECKLIST } from './assets/csvData.js';
     import { t } from './assets/i18n.js';
 
     async function loadDashboard() {
@@ -174,7 +174,6 @@
           // Show localStorage-based checklist progress
           const ls = JSON.parse(localStorage.getItem('checklist_state') || '{}');
           const doneCount = Object.values(ls).filter(v => v && v.done).length;
-          const { DEFAULT_CHECKLIST } = await import('./assets/csvData.js');
           document.getElementById('checklist-badge').textContent = `${doneCount}/${DEFAULT_CHECKLIST.length}`;
           document.getElementById('payments-badge').textContent = '—';
         } else {

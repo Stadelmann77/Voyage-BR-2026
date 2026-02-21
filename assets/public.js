@@ -3,7 +3,7 @@
 // or CSV (offline) and rendering utilities.
 
 import { supabase, configOk } from './supabaseClient.js';
-import { loadCsvData } from './csvData.js';
+import { loadCsvData, DEFAULT_CHECKLIST } from './csvData.js';
 import { t } from './i18n.js';
 
 // ── Navigation active link ──────────────────────────────────
@@ -137,7 +137,6 @@ export async function fetchPayments() {
 
 export async function fetchChecklist(surpriseUnlocked = false) {
   if (!configOk) {
-    const { DEFAULT_CHECKLIST } = await import('./csvData.js');
     return DEFAULT_CHECKLIST.filter(i => !i.is_surprise);
   }
   let query = supabase.from('checklist_items').select('*').order('category').order('id');
