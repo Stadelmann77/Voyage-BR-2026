@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hébergements — Voyage Brésil 2026</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
+    <div class="nav-links">
+      <a href="index.html">🏠 Accueil</a>
+      <a href="flights.html">✈️ Vols</a>
+      <a href="lodgings.html">🏨 Hébergements</a>
+      <a href="transport.html">🚗 Transport</a>
+      <a href="payments.html">💰 Paiements</a>
+      <a href="contacts.html">📞 Contacts</a>
+      <a href="checklist.html">✅ Checklist</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>🏨 Hébergements</h1>
+      <p>5 établissements réservés sur le parcours Brésil 2026.</p>
+    </div>
+
+    <div class="alert alert-warning">
+      ⚠️ <strong>Attention:</strong> Hébergement manquant pour les nuits du 30/05 au 01/06 et du 03/06 au 05/06 — à réserver d'urgence!
+    </div>
+
+    <div id="lodgings-container">
+      <div class="loading-center"><div class="spinner"></div></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script type="module">
+    import { fetchLodgings, showError, showLoading, escHtml, fmtDate, fmtAmt, statusBadge } from './assets/public.js';
+
+    async function loadLodgings() {
+      const container = document.getElementById('lodgings-container');
+      showLoading(container);
+
+      try {
+        const lodgings = await fetchLodgings(false);
+        renderLodgings(lodgings, container);
+      } catch (err) {
+        showError(container, err.message);
+      }
+    }
+
+    function renderLodgings(lodgings, container) {
+      if (!lodgings || lodgings.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">Aucun hébergement trouvé.</div>';
+        return;
+      }
+
+      container.innerHTML = lodgings.map(h => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+            <div>
+              <h2 style="margin-bottom:.25rem">${escHtml(h.id)} — ${escHtml(h.establishment)}</h2>
+              <p style="color:var(--text-light);font-size:.9rem">📍 ${escHtml(h.city)}</p>
+            </div>
+            <div>${statusBadge(h.prepayment)}</div>
+          </div>
+
+          <div class="table-wrap" style="margin-top:1rem">
+            <table>
+              <tbody>
+                <tr>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">Voyageur(s)</td>
+                  <td>${escHtml(h.travellers_desc)}</td>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">Chambre</td>
+                  <td>${escHtml(h.room_type)}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--text-light)">Check-in</td>
+                  <td>${fmtDate(h.checkin_date)} à ${escHtml(h.checkin_time || '—')}</td>
+                  <td style="font-weight:600;color:var(--text-light)">Check-out</td>
+                  <td>${fmtDate(h.checkout_date)} à ${escHtml(h.checkout_time || '—')}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--text-light)">Nuits</td>
+                  <td>${escHtml(String(h.nights || '—'))}</td>
+                  <td style="font-weight:600;color:var(--text-light)">Petit-déjeuner</td>
+                  <td>${escHtml(h.breakfast || '—')}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--text-light)">Prix</td>
+                  <td colspan="3">${fmtAmt(h.price_chf, h.price_brl)}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--text-light)">Annulation gratuite</td>
+                  <td>${h.free_cancellation_until ? 'Jusqu\'au ' + fmtDate(h.free_cancellation_until) : '—'}</td>
+                  <td style="font-weight:600;color:var(--text-light)">Réf. Confirmation</td>
+                  <td><strong>${escHtml(h.booking_ref)}</strong></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--text-light)">Parking</td>
+                  <td>${escHtml(h.parking || '—')}</td>
+                  <td style="font-weight:600;color:var(--text-light)">WiFi</td>
+                  <td>${escHtml(h.wifi || '—')}</td>
+                </tr>
+                ${h.gps ? `<tr>
+                  <td style="font-weight:600;color:var(--text-light)">GPS</td>
+                  <td colspan="3">
+                    ${escHtml(h.gps)}
+                    ${h.lat && h.lon ? ` — <a href="https://www.google.com/maps?q=${h.lat},${h.lon}" target="_blank">📍 Maps</a>` : ''}
+                  </td>
+                </tr>` : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    loadLodgings();
+  </script>
+</body>
+</html>

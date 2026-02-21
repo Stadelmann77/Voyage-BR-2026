@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vols — Voyage Brésil 2026</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+  <!-- globe.gl CDN (depends on Three.js) -->
+  <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
+    <div class="nav-links">
+      <a href="index.html">🏠 Accueil</a>
+      <a href="flights.html">✈️ Vols</a>
+      <a href="lodgings.html">🏨 Hébergements</a>
+      <a href="transport.html">🚗 Transport</a>
+      <a href="payments.html">💰 Paiements</a>
+      <a href="contacts.html">📞 Contacts</a>
+      <a href="checklist.html">✅ Checklist</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>✈️ Vols</h1>
+      <p>7 vols planifiés — cliquez sur 🌍 Globe pour visualiser la route en 3D.</p>
+    </div>
+
+    <!-- Surprise PIN section -->
+    <div class="surprise-banner" id="surprise-banner">
+      <h2>⭐ Section Surprise</h2>
+      <p>Entrez le PIN pour déverrouiller les éléments cachés.</p>
+      <form class="pin-form" id="surprise-pin-form">
+        <input type="password" class="pin-input" id="surprise-pin-input" placeholder="PIN" maxlength="20" autocomplete="off">
+        <button type="submit" class="btn btn-accent">Déverrouiller</button>
+      </form>
+      <div id="surprise-pin-error" style="margin-top:.5rem;font-size:.85rem"></div>
+    </div>
+
+    <div id="surprise-content" class="surprise-content">
+      <div class="alert alert-success">⭐ Section surprise déverrouillée — les vols cachés sont maintenant affichés.</div>
+    </div>
+
+    <!-- Flights table -->
+    <div class="card">
+      <h2>📋 Liste des vols</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Passager(s)</th>
+              <th>Route / Compagnie</th>
+              <th>Départ</th>
+              <th>Arrivée</th>
+              <th>Bagages</th>
+              <th>Sièges</th>
+              <th>Réf.</th>
+              <th>Prix</th>
+              <th>Statut</th>
+              <th>Globe</th>
+            </tr>
+          </thead>
+          <tbody id="flights-tbody">
+            <tr><td colspan="11"><div class="loading-center"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Globe Modal -->
+  <div class="modal-overlay hidden" id="globe-modal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span id="globe-title">🌍 Route</span>
+        <button class="modal-close" id="globe-close" aria-label="Fermer">✕</button>
+      </div>
+      <div id="globe-container"></div>
+      <div class="modal-footer" id="globe-footer"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script type="module" src="assets/flights.js"></script>
+</body>
+</html>

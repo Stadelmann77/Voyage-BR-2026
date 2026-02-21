@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transport — Voyage Brésil 2026</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
+    <div class="nav-links">
+      <a href="index.html">🏠 Accueil</a>
+      <a href="flights.html">✈️ Vols</a>
+      <a href="lodgings.html">🏨 Hébergements</a>
+      <a href="transport.html">🚗 Transport</a>
+      <a href="payments.html">💰 Paiements</a>
+      <a href="contacts.html">📞 Contacts</a>
+      <a href="checklist.html">✅ Checklist</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>🚗 Transport</h1>
+      <p>Location de voiture Localiza — SUV Automatique, 13 jours.</p>
+    </div>
+
+    <div id="transport-container">
+      <div class="loading-center"><div class="spinner"></div></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script type="module">
+    import { fetchTransport, showError, showLoading, escHtml, fmtDate, statusBadge } from './assets/public.js';
+
+    async function loadTransport() {
+      const container = document.getElementById('transport-container');
+      showLoading(container);
+
+      try {
+        const transport = await fetchTransport();
+        renderTransport(transport, container);
+      } catch (err) {
+        showError(container, err.message);
+      }
+    }
+
+    function renderTransport(items, container) {
+      if (!items || items.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">Aucun transport trouvé.</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(t => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+            <div>
+              <h2>${escHtml(t.id)} — ${escHtml(t.vehicle)} · ${escHtml(t.agency)}</h2>
+              <p style="color:var(--text-light);font-size:.9rem">Conducteur: ${escHtml(t.driver)}</p>
+            </div>
+            <div>${statusBadge(t.payment_status)}</div>
+          </div>
+
+          <div class="table-wrap" style="margin-top:1rem">
+            <table>
+              <tbody>
+                <tr>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">Début</td>
+                  <td>${fmtDate(t.start_date)} à ${escHtml(t.start_time || '—')}</td>
+                  <td style="width:180px;font-weight:600;color:var(--text-light)">Fin</td>
+                  <td>${fmtDate(t.end_date)} à ${escHtml(t.end_time || '—')}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--text-light)">Durée</td>
+                  <td>${escHtml(String(t.duration_days || '—'))} jours</td>
+                  <td style="font-weight:600;color:var(--text-light)">Réf. Réservation</td>
+                  <td><strong>${escHtml(t.booking_ref)}</strong></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--text-light)">Prix BRL</td>
+                  <td>R$ ${t.price_brl != null ? Number(t.price_brl).toLocaleString('pt-BR') : '—'}</td>
+                  <td style="font-weight:600;color:var(--text-light)">Pré-autorisation</td>
+                  <td>R$ ${t.preauth_brl != null ? Number(t.preauth_brl).toLocaleString('pt-BR') : '—'} (remb. après clôture)</td>
+                </tr>
+                ${t.agency_address ? `<tr>
+                  <td style="font-weight:600;color:var(--text-light)">Adresse agence</td>
+                  <td colspan="3">${escHtml(t.agency_address)}</td>
+                </tr>` : ''}
+                ${t.notes ? `<tr>
+                  <td style="font-weight:600;color:var(--text-light)">Notes</td>
+                  <td colspan="3">${escHtml(t.notes)}</td>
+                </tr>` : ''}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:1rem">
+            <div class="alert alert-warning">
+              ⚠️ <strong>À payer à la prise du véhicule.</strong> Pré-autorisation R$ ${t.preauth_brl != null ? Number(t.preauth_brl).toLocaleString('pt-BR') : '2 500'} sur carte.
+              Annulation gratuite >48h. No-show = 30%.
+            </div>
+            <div class="alert alert-info">
+              💡 Téléchargez l'app <strong>Localiza FAST</strong> pour la prise en charge digitale sans comptoir.
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    loadTransport();
+  </script>
+</body>
+</html>
