@@ -1,0 +1,50 @@
+﻿🗄️ BASE DE DONNÉES SOURCE — VOYAGE BRÉSIL 2026;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;
+VOLS;;;;;;;;;;;;;;;;;;
+ID;Passager(s);Itinéraire;Date Départ;Heure Départ;Date Arrivée;Heure Arrivée;Compagnie;N° Vols;Classe;Réf. Réservation;Bagage Cabine;Bagage Soute;Sièges;Prix CHF;Prix BRL;Statut Paiement;Nb Pax;Notes
+V1;Claudeane;GVA → ZRH → GRU (São Paulo);27.04.2026;20:05;28.04.2026;05:25;SWISS;LX2819 + LX92;Economy Light (K);YS3VET;1 main (8kg, 118lcm);⚠️ 0 SOUTE;Non sélectionnés;290,15;;✅ Payé - MC ****4753;1;Terminal 1 GVA
+V2;Claudeane;VCP (São Paulo) → BEL → Ourilândia do Norte;07.05.2026;21:45;08.05.2026;09:45;Azul (via Trip.com);AD2954 + AD5108;Economy;TNG1NT / AKE4YZ;1 pers + 1 cabine (10kg);✅ 1 soute (23kg);Non sélectionnés;311,8;;⚠️ En Espera (Trip.com);1;Escale Belém
+V3;Claudio;GVA → Lisbonne → FOR (Fortaleza);23.05.2026;13:00;23.05.2026;21:20;TAP Portugal;TP941 + TP35;Économique;XR2CPW;1 petit + 1 cabine (10kg);⚠️ 0 SOUTE;Non sélectionnés;845,81;;✅ Payé - Booking.com (A/R);1;Billet A/R
+V4;Claudio;FOR → Lisbonne → GVA (retour);05.06.2026;22:50;06.06.2026;17:30;TAP Portugal;TP36 + TP942;Économique;XR2CPW;1 petit + 1 cabine (10kg);⚠️ 0 SOUTE;10A (TP36) / 7E (TP942);0;;✅ Inclus A/R (845.81 CHF);1;Retour inclus dans V3
+V5;Claudeane;FOR → Lisbonne → GVA (retour);05.06.2026;22:50;06.06.2026;17:30;TAP Portugal;TP36 + TP942;Économique;XR85TH;1 petit + 1 cabine (10kg);✅ 1 soute (23kg);10C (TP36) / 7F (TP942);552,15;;✅ Payé - Booking.com;1;
+V6;Claudeane + Lucileide + Jhemerson;MAB (Marabá) → BEL (Belém);25.05.2026;14:50;25.05.2026;15:55;Azul;AD 4210;—;MJ5NQC;0 (non sélectionné);0 (non sélectionné);11D / 11E / 11F;;1300,17;⚠️ EN ESPERA - 3 pax;3;Remplace LI2NWF
+V7;Claudeane + Lucileide + Jhemerson;BEL (Belém) → FOR (Fortaleza);25.05.2026;18:00;25.05.2026;19:55;Azul;AD 4101;—;ON3LQT;0 (non sélectionné);0 (non sélectionné);11A / 11B / 11C;;799,14;⚠️ EN ESPERA - 3 pax;3;Remplace ZLT7RZ
+;;;;;;;;;;;;;;;;;;
+HÉBERGEMENTS;;;;;;;;;;;;;;;;;;
+ID;Voyageur(s);Établissement;Ville;Date CheckIn;Heure CheckIn;Date CheckOut;Heure CheckOut;Nuits;Chambre;Petit-déj.;Prix CHF;Prix BRL;Prépaiement;Annulation gratuite;Réf. Confirmation;Parking;WiFi;GPS
+H1;Claudeane (+ fille);Free Palace Hotel;São Paulo;27.04.2026;13:00;30.04.2026;12:00;3;Lits Jumeaux Standard;✅ OUI;103;691,65;❌ NON requis;24/04/2026;5474140188;R$ 35/jour;Gratuit;S 023° 33.693, W 46° 37.977
+H2;Claudio (seul);Maly Boutique Hotel;Fortaleza (Praia do Futuro);23.05.2026;14:00;25.05.2026;12:00;2;Suite avec Balcon (vue jardin/piscine);✅ OUI;116;779,62;✅ OUI - Prépaiement total;17/05/2026;5987193612;Pas de parking;Gratuit;S 003° 43.880, W 38° 27.466
+H3;Claudio + Claudeane + Lucileide + Jhemerson;Hotel Encontro do Sol;Fortaleza (Meireles);25.05.2026;13:30;27.05.2026;12:00;2;Quadruple Classique;✅ OUI;125;840;❌ NON PAYÉ — 50% à payer avant le 09/04/2026 (15j avant annul. 24/04);24/04/2026;5331265550;Pas de parking;Gratuit;S 003° 43.418, W 38° 30.401
+H4;Claudio + Claudeane + Lucileide + Jhemerson;ASAS DEL MAR - SUITES;Canoa Quebrada;27.05.2026;14:00;30.05.2026;12:00;3;Quadruple - Vue sur Mer;Non mentionné;294;1968;❌ NON PAYÉ — Conditions à vérifier. Si 50%: payer avant le 04/05/2026 (15j avant annul. 19/05);19/05/2026;6862089551;Gratuit (public);Gratuit;S 004° 31.671, W 37° 41.874
+H5;Claudio + Claudeane + Lucileide + Jhemerson;Pousada Bangalô;Jericoacoara;01.06.2026;12:00;03.06.2026;12:00;2;2× Double/Twin Standard;✅ OUI;129;861,12;❌ NON PAYÉ — 50% à payer avant le 11/05/2026 (15j avant annul. 26/05);26/05/2026;5620.348.709;Public (supplément possible);Gratuit;S 002° 47.867, W 40° 30.843
+;;;;;;;;;;;;;;;;;;
+TRANSPORT;;;;;;;;;;;;;;;;;;
+ID;Conducteur(s);Véhicule;Agence;Date Début;Heure Début;Date Fin;Heure Fin;Durée (jours);Prix BRL;Pré-autorisation BRL;Statut Paiement;Réf.;Adresse Agence;Notes;;;;
+T1;Claudio + conducteur additionnel;SUV AUTOMATIQUE;Localiza;23.05.2026;22:00;05.06.2026;18:00;13;3132,3;2500;⚠️ À PAYER à la prise;MO49499YVQBC;AV SENADOR CARLOS JEREISSATI 21, SERRINHA, FORTALEZA, CE;Annulation gratuite >48h. 24h/24.;;;;
+;;;;;;;;;;;;;;;;;;
+CONTACTS;;;;;;;;;;;;;;;;;;
+ID;Organisme;Téléphone;Adresse / Web;Notes;;;;;;;;;;;;;;
+C1;SWISS Service Center;+41 (0) 848 700 700;swiss.com/webcheckin;Réf YS3VET;;;;;;;;;;;;;;
+C2;TAP Portugal;—;flytap.com;Réf XR2CPW / XR85TH;;;;;;;;;;;;;;
+C3;Azul Linhas Aéreas;4003-1118 / 0800 887 1118;voeazul.com.br;Réf MJ5NQC + ON3LQT + TNG1NT;;;;;;;;;;;;;;
+C4;Booking.com (assist. FR);0445 111 635;your.booking.com;+33 1 57 32 92 09;;;;;;;;;;;;;;
+C5;Free Palace Hotel;+55 11 3271 8596;RUA TAMANDARE 246, Liberdade, SP;GPS: S023°33.693 W46°37.977;;;;;;;;;;;;;;
+C6;Maly Boutique Hotel;+55 85 99111 0568;Av Clóvis Arrais Maia 2790, Fortaleza;GPS: S003°43.880 W38°27.466;;;;;;;;;;;;;;
+C7;Hotel Encontro do Sol;+55 85 3031 6222;Rua Monsenhor Bruno 122, Meireles;GPS: S003°43.418 W38°30.401;;;;;;;;;;;;;;
+C8;ASAS DEL MAR;+55 85 99856 8461;DT SITIO ESTEVAO, Canoa Quebrada;GPS: S004°31.671 W37°41.874;;;;;;;;;;;;;;
+C9;Localiza Rent a Car;App Localiza (FAST);Aéroport Fortaleza;Réf MO49499YVQBC;;;;;;;;;;;;;;
+C10;Police (Polícia Militar);190;;;;;;;;;;;;;;;;
+C11;SAMU (ambulance);192;;;;;;;;;;;;;;;;
+C12;Pompiers (Bombeiros);193;;;;;;;;;;;;;;;;
+C13;Ambassade Suisse;+55 61 3443 5500;Brasília;;;;;;;;;;;;;;;
+C14;Claudio (personnel);41762470577;;;;;;;;;;;;;;;;
+C15;Pousada Bangalô (Jericoacoara);+55 88 99904 5258;Rua Novo Jeri, S/N, Jericoacoara, CEP 62598-000;GPS: S002°47.867 W40°30.843. Réf 5620.348.709;;;;;;;;;;;;;;
+VOYAGEURS;;;;;;;;;;;;;;;;;;
+ID;Nom;Rôle;Date Début Voyage;Date Fin Voyage;Retour par;;;;;;;;;;;;;
+P1;Claudeane;Épouse (brésilienne);27.04.2026;06.06.2026;✈️ Avion;;;;;;;;;;;;;
+P2;Claudio;Voyageur principal;23.05.2026;06.06.2026;✈️ Avion;;;;;;;;;;;;;
+P3;Lucileide;Sœur de Claudeane;25.05.2026;après 06/06;🚌 Bus;;;;;;;;;;;;;
+P4;Jhemerson;Neveu;25.05.2026;après 06/06;🚌 Bus;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;
+PARAMÈTRES;;;;;;;;;;;;;;;;;;
+Taux CHF/BRL;6,7;;;;;;;;;;;;;;;;;

@@ -1,0 +1,255 @@
+﻿📄 DESCRIPTION COMPLÈTE DU CLASSEUR — VOYAGE BRÉSIL 2026 (MÀJ 21/02/2026);;;;;
+Source unique: 🗄️ BD Source. Tous les onglets sont liés par formules.;;;;;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+MÉTA-INFORMATIONS;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Voyageur;Rôle;Dates;Retour par;;
+Claudeane;Épouse (brésilienne) 🎀;27/04 → 06/06;✈️ Avion;;
+Claudio;Voyageur principal 👔;23/05 → 06/06;✈️ Avion;;
+Lucileide;Sœur de Claudeane;~25/05 → après 06/06;🚌 Bus;;
+Jhemerson;Neveu;~25/05 → après 06/06;🚌 Bus;;
+;;;;;
+Devise;Taux de change;Note;;;
+CHF / BRL;1 CHF = 6.7 BRL;Modifiable dans BD Source B50;;;
+;;;;;
+Couleur;Code Hex;Usage;;;
+■;#1F4E79;Headers principaux;;;
+■;#2E75B6;Headers hôtels + Claudio;;;
+■;#E74C8B;Claudeane (Gantt);;;
+■;#4472C4;Headers BD Source;;;
+■;#FFC7CE;Fond alertes urgentes;;;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 📋 Logistique Vols (7 vols) — lié à BD Source;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+N°;Passager(s);Itinéraire;Date Dép;Heure Dép;Compagnie
+V1;Claudeane;GVA → ZRH → GRU;27/04/2026;20:05;SWISS
+V2;Claudeane;VCP → BEL → Ourilândia;05.07.2026;21:45;Azul/Trip.com
+V3;Claudio;GVA → Lisbonne → FOR;23/05/2026;13:00;TAP Portugal
+V4;Claudio;FOR → Lisbonne → GVA;06.05.2026;22:50;TAP Portugal
+V5;Claudeane;FOR → Lisbonne → GVA;06.05.2026;22:50;TAP Portugal
+V6;Claud.+Lucil.+Jhem.;MAB → BEL;25/05/2026;14:50;Azul
+V7;Claud.+Lucil.+Jhem.;BEL → FOR;25/05/2026;18:00;Azul
+;;;;;
+N°;Date Arrivée;Heure Arr;Réf.;Prix CHF;Prix BRL
+V1;28/04/2026;05:25;YS3VET;03:36;—
+V2;05.08.2026;09:45;TNG1NT/AKE4YZ;19:12;—
+V3;23/05/2026;21:20;XR2CPW;845.81 (A/R);—
+V4;06.06.2026;17:30;XR2CPW;inclus A/R;—
+V5;06.06.2026;17:30;XR85TH;552,15;—
+V6;25/05/2026;15:55;MJ5NQC;—;1 300.17
+V7;25/05/2026;19:55;ON3LQT;—;799,14
+;;;;;
+N°;Bagage Cabine;Bagage Soute;Sièges;Statut;Notes
+V1;1 main (8kg);⚠️ 0 SOUTE;Non sélect.;✅ Payé MC****4753;Economy Light
+V2;1 pers+1 cab (10kg);✅ 1 soute (23kg);Non sélect.;⚠️ En Espera;Escale Belém
+V3;1 petit+1 cab (10kg);⚠️ 0 SOUTE;Non sélect.;✅ Payé Booking;Billet A/R
+V4;1 petit+1 cab (10kg);⚠️ 0 SOUTE;10A/7E;✅ Inclus A/R;
+V5;1 petit+1 cab (10kg);✅ 1 soute (23kg);10C/7F;✅ Payé Booking;
+V6;0;0;11D/11E/11F;⚠️ EN ESPERA;3 pax, rempl. LI2NWF
+V7;0;0;11A/11B/11C;⚠️ EN ESPERA;3 pax, rempl. ZLT7RZ
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 🏨 Hébergements (5 hôtels) — lié à BD Source;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+N°;Établissement;Ville;Check-in;Check-out;Nuits
+H1;Free Palace Hotel;São Paulo;27/04/2026 13:00;30/04/2026 12:00;3
+H2;Maly Boutique Hotel;Fortaleza (Praia do Futuro);23/05/2026 14:00;25/05/2026 12:00;2
+H3;Hotel Encontro do Sol;Fortaleza (Meireles);25/05/2026 13:30;27/05/2026 12:00;2
+H4;ASAS DEL MAR - SUITES;Canoa Quebrada;27/05/2026 14:00;30/05/2026 12:00;3
+H5;Pousada Bangalô;Jericoacoara;06.01.2026 12:00;06.03.2026 12:00;2
+;;;;;
+N°;Voyageur(s);Chambre;Petit-déj.;Prix CHF;Prix BRL
+H1;Claudeane (+ fille);Lits Jumeaux Standard;✅ OUI;103;691,65
+H2;Claudio (seul);Suite avec Balcon (vue jardin/piscine);✅ OUI;116;779,62
+H3;Claudio + Claudeane + Lucileide + Jhemerson;Quadruple Classique;✅ OUI;125;840
+H4;Claudio + Claudeane + Lucileide + Jhemerson;Quadruple - Vue sur Mer;Non mentionné;294;1968
+H5;Claudio + Claudeane + Lucileide + Jhemerson;2× Double/Twin Standard;✅ OUI;129;861,12
+;;;;;
+N°;Prépaiement;Annulation gratuite;Réf.;Parking;GPS
+H1;❌ NON requis;Jusqu'au 24/04/2026;5474140188;R$ 35/jour;S 023° 33.693, W 46° 37.977
+H2;✅ OUI - Prépaiement total;Jusqu'au 17/05/2026;5987193612;Pas de parking;S 003° 43.880, W 38° 27.466
+H3;❌ NON PAYÉ — 50% avant 09/04;Jusqu'au 24/04/2026;5331265550;Pas de parking;S 003° 43.418, W 38° 30.401
+H4;❌ NON PAYÉ — vérifier, 50% avant 04/05;Jusqu'au 19/05/2026;6862089551;Gratuit (public);S 004° 31.671, W 37° 41.874
+H5;❌ NON PAYÉ — 50% avant 11/05;Jusqu'au 26/05/2026;5620.348.709;Public (suppl. possible);S 002° 47.867, W 40° 30.843
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 🚗 Location Voiture (Localiza) — lié à BD Source;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Info;Valeur;;;;
+Référence;MO49499YVQBC;;;;
+Véhicule;SUV AUTOMATIQUE;;;;
+Durée;13 jours;;;;
+Conducteur;Claudio + conducteur additionnel;;;;
+Prise;23/05/2026 à 22h00 — Aéroport Fortaleza (24h/24);;;;
+Retour;05/06/2026 à 18h00 — Même agence;;;;
+Adresse;AV SENADOR CARLOS JEREISSATI 21, SERRINHA, FORTALEZA, CE;;;;
+;;;;;
+Détail coûts BRL;Calcul;Montant;;;
+Diárias (location);13 × R$ 110.95;1 442.35;;;
+Neutraliza (carbone);13 × R$ 13.00;169;;;
+Condutor Adicional;13 × R$ 61.88;804,44;;;
+Condutor Jovem;13 × R$ 0.13;1,69;;;
+Limpeza Garantida (-40%);1 × R$ 34.95;34,95;;;
+Proteção Total Avarias;13 × R$ 710.32;9 234.16;;;
+Seguro de Terceiros;13 × R$ 17.95;233,35;;;
+Proteção do Carro;13 × R$ 17.52;227,76;;;
+Taxa de aluguel;Taxe fixe;408,56;;;
+TOTAL LOCATION;;3 132.30;;;
+;;;;;
+Pré-autorisation;R$ 2 500.00 (remboursée après clôture);;;;
+Statut;⚠️ À PAYER à la prise;;;;
+Note;Annulation gratuite >48h. <48h = 20%. No-show = 30%.;;;;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 📅 Where by Date (23 entrées) — lié à BD Source;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Date;Jour;Claudio;Claudeane;Lucileide + Jhemerson;
+27/04;Dim;🏠 Genève;✈️ GVA → ZRH → GRU (dép 20:05);—;
+28/04;Lun;🏠 Genève;📍 Arrivée São Paulo 05:25 → Free Palace Hotel;—;
+29/04;Mar;🏠 Genève;🏨 Free Palace Hotel, São Paulo;—;
+30/04-06/05;...;🏠 Genève;📍 Chez la fille à São Paulo (~1 semaine);—;
+46208;Jeu;🏠 Genève;✈️ VCP → BEL → Ourilândia (dép 21:45);—;
+46239;Ven;🏠 Genève;✈️ BEL→Ourilândia (arr 09:45);—;
+09/05-22/05;...;🏠 Genève;📍 Ourilândia do Norte (chez famille, ~2 sem);📍 Ourilândia do Norte;
+23/05;Sam soir;🏨 Maly Boutique Hotel, Fortaleza;📍 Ourilândia do Norte;📍 Ourilândia do Norte;
+24/05;Dim;🏨 Maly Boutique Hotel, Fortaleza;⚠️ Ourilândia → Marabá? (transport manquant);⚠️ Ourilândia → Marabá?;
+25/05;Lun;🏨 Check-out Maly → Encontro do Sol 13:30;✈️ MAB→BEL 14:50 / BEL→FOR 18:00 (arr 19:55);✈️ MAB→BEL→FOR (même vols);
+25/05;Lun soir;🏨 Encontro do Sol, Fortaleza;🏨 Encontro do Sol, Fortaleza;🏨 Encontro do Sol;
+26/05;Mar;🏨 Encontro do Sol, Fortaleza;🏨 Encontro do Sol, Fortaleza;🏨 Encontro do Sol;
+27/05;Mer;🚗 Fortaleza → Canoa Quebrada (ASAS DEL MAR);🚗 → ASAS DEL MAR, Canoa Quebrada;🚗 → ASAS DEL MAR;
+28/05;Jeu;🏖️ ASAS DEL MAR, Canoa Quebrada;🏖️ ASAS DEL MAR, Canoa Quebrada;🏖️ ASAS DEL MAR;
+29/05;Ven;🏖️ ASAS DEL MAR, Canoa Quebrada;🏖️ ASAS DEL MAR, Canoa Quebrada;🏖️ ASAS DEL MAR;
+30/05;Sam;⚠️ Check-out ASAS → HÉBERGEMENT MANQUANT;⚠️ HÉBERGEMENT MANQUANT;⚠️ HÉBERGEMENT MANQUANT;
+31/05;Dim;⚠️ HÉBERGEMENT MANQUANT;⚠️ HÉBERGEMENT MANQUANT;⚠️ HÉBERGEMENT MANQUANT;
+46028;Lun;🏨 Pousada Bangalô, Jericoacoara;🏨 Pousada Bangalô, Jericoacoara;🏨 Pousada Bangalô;
+46059;Mar;🏨 Pousada Bangalô, Jericoacoara;🏨 Pousada Bangalô, Jericoacoara;🏨 Pousada Bangalô;
+46087;Mer;⚠️ HÉBERGEMENT MANQUANT (check-out Pousada);⚠️ HÉBERGEMENT MANQUANT;⚠️ HÉBERGEMENT MANQUANT;
+46118;Jeu;⚠️ HÉBERGEMENT MANQUANT;⚠️ HÉBERGEMENT MANQUANT;⚠️ HÉBERGEMENT MANQUANT;
+46148;Ven;🚗 Retour Localiza 18:00 → ✈️ FOR→LIS→GVA 22:50;✈️ FOR→LIS→GVA 22:50;🚌 Retour en bus (leur logistique);
+46179;Sam;📍 Arrivée GVA 17:30 🏠;📍 Arrivée GVA 17:30 🏠;🚌 En route retour bus;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 📊 Timeline Gantt (2 versions) — lié à BD Source;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+2 onglets Gantt avec charts barStacked:;;;;;
+• Gantt (2): 2 swim lanes Claudeane (🎀 rose #E74C8B) / Claudio (👔 bleu #2E75B6);;;;;
+• Gantt original: version précédente conservée;;;;;
+• Axe dates: 27/04 → 10/06 (dd/MM). Barres avec durée en labels blancs.;;;;;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 💰 Coûts par Personne — lié à BD Source;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Catégorie;Détail;CHF;BRL;Payé?;Notes
+CLAUDIO;;;;;
+Vol;GVA→FOR A/R (TAP);845,81;;✅ OUI;Booking.com, réf XR2CPW
+Hôtel;Maly Boutique, 2 nuits;116;779,62;✅ Prépayé;1 pers, suite balcon
+Hôtel;Encontro do Sol, 2 nuits (1/4);31,25;210;⚠️ 50%;4 pers, part 1/4 = R$210
+Hôtel;ASAS DEL MAR, 3 nuits (1/4);73,5;492;❌ Non payé — 50% avant 09/04;4 pers, part 1/4 = R$492
+Voiture;Localiza SUV 13 jours;;3132,3;❌ Non payé — vérifier, 50% avant 04/05;Pré-auth R$2500 à la prise
+Hôtel;Pousada Bangalô, 2 nuits (1/4);32,25;215,28;❌ Non payé — 50% avant 11/05;4 pers, part 1/4
+SOUS-TOTAL CLAUDIO;;1 098.81;4 829.20;;
+;;;;;
+CLAUDEANE;;;;;
+Vol;GVA→GRU (SWISS aller);290,15;;✅ OUI;MC ****4753, réf YS3VET
+Vol;FOR→GVA (TAP retour);552,15;;✅ OUI;Booking.com, réf XR85TH
+Vol;MAB→BEL→FOR (Azul, 1/3);;699,77;⚠️ En espera;R$(1300.17+799.14)/3. MJ5NQC+ON3LQT
+Vol;VCP→BEL→Ourilândia (Azul/Trip);311,8;;⚠️ En espera;Réf TNG1NT/AKE4YZ
+Hôtel;Free Palace São Paulo (1/2);51,5;345,825;❌ Non payé;2 pers, part 1/2
+Hôtel;Encontro do Sol (1/4);31,25;210;❌ Non payé — 50% avant 09/04;4 pers, part 1/4
+Hôtel;ASAS DEL MAR (1/4);73,5;492;❌ Non payé — vérifier, 50% avant 04/05;4 pers, part 1/4
+Hôtel;Pousada Bangalô, 2 nuits (1/4);32,25;215,28;❌ Non payé — 50% avant 11/05;4 pers, part 1/4
+SOUS-TOTAL CLAUDEANE;;1 342.60;1 962.88;;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 💰 Budget Total — lié à BD Source;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Catégorie;Montant CHF;Montant BRL;Statut;;
+VOLS INTERNATIONAUX;;;;;
+Claudeane: GVA→GRU (SWISS);290,15;;✅ Payé;;
+Claudio: GVA→FOR A/R (TAP);845,81;;✅ Payé;;
+Claudeane: FOR→GVA (TAP);552,15;;✅ Payé;;
+VOLS DOMESTIQUES BRÉSIL;;;;;
+VCP→BEL→Ourilândia (Azul/Trip);311,8;;✅ Payé;;
+3 pax: MAB→BEL (Azul) MJ5NQC;;1 300.17;✅ Payé;;
+3 pax: BEL→FOR (Azul) ON3LQT;;799,14;✅ Payé;;
+HÉBERGEMENTS;;;;;
+Free Palace Hotel (3 nuits);103;691,65;❌ Non payé;;
+Maly Boutique Hotel (2 nuits);116;779,62;✅ Prépayé;;
+Hotel Encontro do Sol (2 nuits);125;840;⚠️ 50% avant 09/04;;
+ASAS DEL MAR (3 nuits);294;1 968;❌ Non payé — 50% avant 04/05;;
+Pousada Bangalô (2 nuits);129;861,12;❌ Non payé — 50% avant 11/05;;
+LOCATION VOITURE;;;;;
+Localiza SUV 13 jours;;3 132.30;❌ À payer;;
+;;;;;
+TOTAUX;;;;;
+Total CHF direct;2 766.91;;;;
+Total BRL;;10 372.00;;;
+Taux de change;1 CHF = 6.7 BRL;;;;
+Total BRL converti en CHF;1 548.06;;;;
+💰 GRAND TOTAL ESTIMÉ (CHF);4 314.97 CHF;;;;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: ⚠️ Trous & Alertes (13 alertes);;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Priorité;Alerte;Concerne;Action requise;;
+🔴 URGENT;4 NUITS HÉBERGEMENT MANQUANT (03/06 → 05/06);TOUS (4 pers);Réserver encore 2 nuits (03-05/06)!;;
+🔴 URGENT;Vols Azul EN ESPERA (MJ5NQC + ON3LQT);Claud.+Lucil.+Jhem.;Vérifier confirmation. Bagages = 0!;;
+✅ RÉSOLU;Transport SP → Ourilândia → BILLET TROUVÉ;Claudeane;Azul AD2954+AD5108, réf TNG1NT/AKE4YZ;;
+🔴 URGENT;Vols Azul EN ESPERA (MAB→BEL + BEL→FOR);Claud.+Lucil.+Jhem.;Vérifier statut. Bagages et sièges = 0!;;
+✅ RÉSOLU;Retour Lucileide + Jhemerson: bus après 06/06;Lucil.+Jhem.;Gèrent leur logistique.;;
+🟠 ATTENTION;Claudeane: 0 BAGAGE SOUTE SWISS (Economy Light);Claudeane;Acheter franchise bagage soute SWISS!;;
+🟠 ATTENTION;Claudio: 0 BAGAGE SOUTE TAP (aller ET retour);Claudio;Vérifier/acheter franchise TAP.;;
+🟠 ATTENTION;Azul: Bagages ET sièges = 0 pour 3 pax;Claud.+Lucil.+Jhem.;Sélectionner sur app Azul.;;
+🟡 INFO;Encontro do Sol: 50% prépaiement virement;Claudio;Contacter hôtel pour infos virement.;;
+🟡 INFO;Claudio: Sièges non sélect. TAP aller;Claudio;Sélectionner sièges TP941+TP35.;;
+🟡 INFO;Claudeane: Sièges non sélect. SWISS;Claudeane;Sélectionner sièges LX2819+LX92.;;
+🔴 URGENT;DEADLINES: Encontro 09/04, ASAS 04/05, Pousada 11/05;Claudio;50% hébergements 15j avant annulation!;;
+✅ PARTIEL;Pousada Bangalô 01-03/06 → Gap 6→4 nuits;TOUS;Réf 5620.348.709. Encore 2 nuits à réserver.;;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: ✅ Checklist Voyage (16 items);;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Fait?;Voyageur;Document / Action;Détails;Date limite;
+DOCUMENTS;;;;;
+☐;Claudio;Passeport valide;Validité > 6 mois après retour;Avant départ;
+☐;Claudeane;Passeport + titre de séjour CH;Vérifier titre de séjour CH valide;Avant départ;
+☐;Tous;Copies documents (numérique);Photos passeports, billets dans cloud;Avant départ;
+VOLS;;;;;
+☐;Claudeane;Check-in SWISS LX2819+LX92;Réf YS3VET - GVA T1;24h avant 27/04;
+☐;Claudeane;⚠️ Acheter bagage soute SWISS!;Economy Light = 0 soute!;DÈS QUE POSSIBLE;
+☐;Claudio;Check-in TAP TP941+TP35;Réf XR2CPW;24h avant 23/05;
+☐;Claudio;⚠️ Vérifier bagage soute TAP;Confirmation dit 0 soute;DÈS QUE POSSIBLE;
+☐;Claud./Lucil./Jhem.;⚠️ Confirmer vols Azul (EN ESPERA);MJ5NQC+ON3LQT. Bagages = 0!;;
+HÉBERGEMENTS;;;;;
+☐;Claudio;⚠️ Payer 50% Encontro do Sol;Deadline 09/04. Tél +55 85 3031 6222;Avant 09/04 ⚠️;
+☐;Claudio;⚠️ Vérifier ASAS DEL MAR;Si 50%: payer avant 04/05;Avant 04/05;
+☐;Claudio;⚠️ Payer 50% Pousada Bangalô;Deadline 11/05. Réf 5620.348.709;Avant 11/05;
+☐;Tous;⚠️ RÉSERVER 2 NUITS (03-05/06)!;TROU: 2 nuits avant vol retour!;URGENT!;
+TRANSPORT;;;;;
+☐;Claud./Lucil./Jhem.;⚠️ Transport Ourilândia → Marabá;Accès aéroport MAB 25/05;Avant 25/05;
+☐;Claudio;Télécharger app Localiza (FAST);Retirada Digital sans comptoir;Avant 23/05;
+;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+ONGLET: 📞 Contacts & Adresses;;;;;
+══════════════════════════════════════════════════════════════;;;;;
+Organisme;Téléphone;Adresse / Web;Notes;;
+COMPAGNIES AÉRIENNES;;;;;
+SWISS Service Center;+41 (0) 848 700 700;swiss.com/webcheckin;Réf YS3VET;;
+TAP Portugal;flytap.com;—;Réf XR2CPW / XR85TH;;
+Azul Linhas Aéreas;4003-1118 / 0800 887 1118;voeazul.com.br;Réf MJ5NQC+ON3LQT+TNG1NT;;
+Booking.com (FR);0445 111 635;your.booking.com;+33 1 57 32 92 09;;
+HÔTELS;;;;;
+Free Palace Hotel (SP);+55 11 3271 8596;Rua Tamandare 246, Liberdade;GPS: S023°33.693 W46°37.977;;
+Maly Boutique (FOR);+55 85 99111 0568;Av. Clóvis Arrais Maia 2790;GPS: S003°43.880 W38°27.466;;
+Encontro do Sol (FOR);+55 85 3031 6222;Rua Monsenhor Bruno 122, Meireles;GPS: S003°43.418 W38°30.401;;
+ASAS DEL MAR (CQ);+55 85 99856 8461;DT Sitio Estevao, Canoa Quebrada;GPS: S004°31.671 W37°41.874;;
+Pousada Bangalô (Jeri);+55 88 99904 5258;Rua Novo Jeri, S/N, Jericoacoara;GPS: S002°47.867 W40°30.843;;
+LOCATION VOITURE;;;;;
+Localiza Rent a Car;App Localiza (FAST);Aéroport Fortaleza;Réf MO49499YVQBC - 24h/24;;
+URGENCES BRÉSIL;;;;;
+Police (Polícia Militar);190;;;;
+SAMU (ambulance);192;;;;
+Pompiers (Bombeiros);193;;;;
+Ambassade Suisse;+55 61 3443 5500;Brasília;Claudio: +41762470577;;
