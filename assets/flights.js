@@ -1,0 +1,268 @@
+// assets/flights.js
+// Flight list page + 3D globe modal using globe.gl
+
+import { fetchFlights, escHtml, fmtDate, fmtAmt, statusBadge } from './public.js';
+import { FUNCTIONS_URL } from './supabaseClient.js';
+
+let globeInstance = null;
+let surpriseUnlocked = sessionStorage.getItem('surprise_unlocked') === 'true';
+let surpriseData = null;
+
+// ── Initialise ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (surpriseUnlocked) {
+    const raw = sessionStorage.getItem('surprise_data');
+    if (raw) { try { surpriseData = JSON.parse(raw); } catch(_) {} }
+    showSurpriseSection();
+  }
+
+  await loadFlights();
+  setupSurprisePin();
+  setupGlobeModal();
+});
+
+// ── Load & render flights ───────────────────────────────────
+async function loadFlights() {
+  const tbody = document.getElementById('flights-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="11"><div class="loading-center"><div class="spinner"></div></div></td></tr>';
+
+  try {
+    const flights = await fetchFlights(false);
+    const allFlights = surpriseUnlocked && surpriseData?.flights
+      ? [...flights, ...surpriseData.flights]
+      : flights;
+
+    renderFlightsTable(allFlights, tbody);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="alert alert-danger">⚠️ ${escHtml(err.message)}</div></td></tr>`;
+  }
+}
+
+function renderFlightsTable(flights, tbody) {
+  if (!flights || flights.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-light)">Aucun vol trouvé.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = flights.map(f => {
+    const surprise = f.is_surprise ? '⭐ ' : '';
+    return `<tr>
+      <td><strong>${escHtml(f.id)}</strong></td>
+      <td>${surprise}${escHtml(f.passengers)}</td>
+      <td>
+        <strong>${escHtml(f.route)}</strong><br>
+        <small style="color:var(--text-light)">${escHtml(f.company)} — ${escHtml(f.flight_numbers)}</small>
+      </td>
+      <td>${fmtDate(f.dep_date)}<br><small>${escHtml(f.dep_time || '')}</small></td>
+      <td>${fmtDate(f.arr_date)}<br><small>${escHtml(f.arr_time || '')}</small></td>
+      <td><small>${escHtml(f.cabin_baggage)}</small><br><small>${escHtml(f.hold_baggage)}</small></td>
+      <td><small>${escHtml(f.seats || 'Non sél.')}</small></td>
+      <td><small>${escHtml(f.booking_ref)}</small></td>
+      <td>${fmtAmt(f.price_chf, f.price_brl)}</td>
+      <td>${statusBadge(f.payment_status)}</td>
+      <td>
+        <button class="btn btn-sm btn-outline globe-btn"
+          data-origin="${escHtml(f.origin_iata || '')}"
+          data-dest="${escHtml(f.destination_iata || '')}"
+          data-label="${escHtml(f.route)}"
+          data-olat="${f.origin?.lat || ''}"
+          data-olon="${f.origin?.lon || ''}"
+          data-dlat="${f.destination?.lat || ''}"
+          data-dlon="${f.destination?.lon || ''}"
+          data-flight='${JSON.stringify({ id: f.id, route: f.route, company: f.company, booking_ref: f.booking_ref, dep_date: f.dep_date, dep_time: f.dep_time, arr_date: f.arr_date, arr_time: f.arr_time, class: f.class, seats: f.seats, cabin_baggage: f.cabin_baggage, hold_baggage: f.hold_baggage, pax_count: f.pax_count, notes: f.notes }).replace(/'/g, "&#39;")}'>
+          🌍 Globe
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Globe Modal ─────────────────────────────────────────────
+function setupGlobeModal() {
+  const overlay = document.getElementById('globe-modal');
+  const closeBtn = document.getElementById('globe-close');
+  if (!overlay || !closeBtn) return;
+
+  // Delegate click from table
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.globe-btn');
+    if (!btn) return;
+    e.preventDefault();
+
+    const oLat = parseFloat(btn.dataset.olat);
+    const oLon = parseFloat(btn.dataset.olon);
+    const dLat = parseFloat(btn.dataset.dlat);
+    const dLon = parseFloat(btn.dataset.dlon);
+
+    let flight;
+    try { flight = JSON.parse(btn.dataset.flight); } catch(_) { flight = {}; }
+
+    openGlobeModal(
+      btn.dataset.label,
+      { lat: oLat, lon: oLon, iata: btn.dataset.origin },
+      { lat: dLat, lon: dLon, iata: btn.dataset.dest },
+      flight
+    );
+  });
+
+  closeBtn.addEventListener('click', closeGlobeModal);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeGlobeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGlobeModal(); });
+}
+
+function openGlobeModal(label, origin, dest, flight) {
+  const overlay = document.getElementById('globe-modal');
+  const titleEl = document.getElementById('globe-title');
+  const footerEl = document.getElementById('globe-footer');
+
+  if (titleEl) titleEl.textContent = `🌍 ${label}`;
+  if (footerEl) footerEl.innerHTML = renderFlightDetails(flight);
+
+  overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  initGlobe(origin, dest);
+}
+
+function closeGlobeModal() {
+  const overlay = document.getElementById('globe-modal');
+  overlay.classList.add('hidden');
+  document.body.style.overflow = '';
+  // Destroy globe to free memory
+  if (globeInstance) {
+    const container = document.getElementById('globe-container');
+    if (container) container.innerHTML = '';
+    globeInstance = null;
+  }
+}
+
+function renderFlightDetails(f) {
+  if (!f) return '';
+  return `<dl>
+    <dt>Référence</dt><dd>${escHtml(f.booking_ref)}</dd>
+    <dt>Compagnie</dt><dd>${escHtml(f.company)}</dd>
+    <dt>Classe</dt><dd>${escHtml(f.class)}</dd>
+    <dt>Départ</dt><dd>${fmtDate(f.dep_date)} ${escHtml(f.dep_time || '')}</dd>
+    <dt>Arrivée</dt><dd>${fmtDate(f.arr_date)} ${escHtml(f.arr_time || '')}</dd>
+    <dt>Bagage cabine</dt><dd>${escHtml(f.cabin_baggage)}</dd>
+    <dt>Bagage soute</dt><dd>${escHtml(f.hold_baggage)}</dd>
+    <dt>Sièges</dt><dd>${escHtml(f.seats || 'Non sélectionnés')}</dd>
+    <dt>Pax</dt><dd>${escHtml(String(f.pax_count || 1))}</dd>
+    ${f.notes ? `<dt>Notes</dt><dd>${escHtml(f.notes)}</dd>` : ''}
+  </dl>`;
+}
+
+// ── 3D Globe using globe.gl ─────────────────────────────────
+function initGlobe(origin, dest) {
+  const container = document.getElementById('globe-container');
+  if (!container) return;
+  container.innerHTML = ''; // clear previous
+
+  if (!window.Globe) {
+    container.innerHTML = '<div style="color:#fff;display:flex;align-items:center;justify-content:center;height:100%;font-size:.9rem">Chargement du globe…</div>';
+    // globe.gl is loaded from CDN in flights.html; wait a moment
+    const check = setInterval(() => {
+      if (window.Globe) {
+        clearInterval(check);
+        container.innerHTML = '';
+        buildGlobe(container, origin, dest);
+      }
+    }, 200);
+    return;
+  }
+  buildGlobe(container, origin, dest);
+}
+
+function buildGlobe(container, origin, dest) {
+  const hasCoords = (p) => p && !isNaN(p.lat) && !isNaN(p.lon);
+
+  const arcsData = hasCoords(origin) && hasCoords(dest)
+    ? [{ startLat: origin.lat, startLng: origin.lon, endLat: dest.lat, endLng: dest.lon, color: '#E74C8B' }]
+    : [];
+
+  const pointsData = [
+    hasCoords(origin) ? { lat: origin.lat, lng: origin.lon, label: origin.iata, size: 0.35, color: '#60A5FA' } : null,
+    hasCoords(dest)   ? { lat: dest.lat,   lng: dest.lon,   label: dest.iata,   size: 0.35, color: '#34D399' } : null,
+  ].filter(Boolean);
+
+  const midLat = hasCoords(origin) && hasCoords(dest) ? (origin.lat + dest.lat) / 2 : 20;
+  const midLon = hasCoords(origin) && hasCoords(dest) ? (origin.lon + dest.lon) / 2 : 0;
+
+  const g = window.Globe({ animateIn: true })(container)
+    .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+    .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+    .backgroundColor('#0A0F1E')
+    .showAtmosphere(true)
+    .atmosphereColor('#1D4ED8')
+    .atmosphereAltitude(0.18)
+    .arcsData(arcsData)
+    .arcColor('color')
+    .arcDashLength(0.4)
+    .arcDashGap(0.2)
+    .arcDashAnimateTime(2000)
+    .arcStroke(2)
+    .arcAltitudeAutoScale(0.35)
+    .pointsData(pointsData)
+    .pointColor('color')
+    .pointAltitude('size')
+    .pointRadius(0.5)
+    .pointLabel('label');
+
+  // Point camera at midpoint
+  g.pointOfView({ lat: midLat, lng: midLon, altitude: 2.5 }, 800);
+
+  globeInstance = g;
+}
+
+// ── Surprise PIN ────────────────────────────────────────────
+function setupSurprisePin() {
+  const form = document.getElementById('surprise-pin-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const pin = document.getElementById('surprise-pin-input')?.value?.trim();
+    if (!pin) return;
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    try {
+      const res = await fetch(`${FUNCTIONS_URL}/verify-surprise-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      });
+      const json = await res.json();
+
+      if (json.ok) {
+        surpriseUnlocked = true;
+        surpriseData = json.data;
+        sessionStorage.setItem('surprise_unlocked', 'true');
+        sessionStorage.setItem('surprise_data', JSON.stringify(json.data));
+        showSurpriseSection();
+        await loadFlights(); // reload to include surprise flights
+      } else {
+        const err = document.getElementById('surprise-pin-error');
+        if (err) err.textContent = '❌ PIN incorrect. Réessayez.';
+      }
+    } catch (_) {
+      const err = document.getElementById('surprise-pin-error');
+      if (err) err.textContent = '❌ Erreur réseau.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Déverrouiller';
+    }
+  });
+}
+
+function showSurpriseSection() {
+  const content = document.getElementById('surprise-content');
+  const banner  = document.getElementById('surprise-banner');
+  if (content) content.classList.add('visible');
+  if (banner) {
+    banner.innerHTML = '<h2>⭐ Section Surprise déverrouillée!</h2><p>Les vols et éléments surprises sont maintenant visibles.</p>';
+  }
+}

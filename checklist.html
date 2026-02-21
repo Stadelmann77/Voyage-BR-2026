@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checklist — Voyage Brésil 2026</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
+    <div class="nav-links">
+      <a href="index.html">🏠 Accueil</a>
+      <a href="flights.html">✈️ Vols</a>
+      <a href="lodgings.html">🏨 Hébergements</a>
+      <a href="transport.html">🚗 Transport</a>
+      <a href="payments.html">💰 Paiements</a>
+      <a href="contacts.html">📞 Contacts</a>
+      <a href="checklist.html">✅ Checklist</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>✅ Checklist Voyage</h1>
+      <p>Actions à compléter avant et pendant le voyage. Cochez les items avec votre PIN et votre nom.</p>
+    </div>
+
+    <!-- PIN unlock bar -->
+    <div class="checklist-unlock-bar">
+      <span>🔒</span>
+      <label for="checklist-pin">PIN Checklist</label>
+      <input type="password" id="checklist-pin" placeholder="PIN" maxlength="20" autocomplete="off">
+      <label for="checklist-name">Votre nom</label>
+      <input type="text" id="checklist-name" placeholder="Ex: Claudio" maxlength="50">
+      <button class="btn btn-primary btn-sm" id="checklist-save-pin">🔓 Activer</button>
+      <small style="color:var(--text-light)">Requis pour cocher des items.</small>
+    </div>
+
+    <div id="checklist-container">
+      <div class="loading-center"><div class="spinner"></div></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script type="module" src="assets/checklist.js"></script>
+</body>
+</html>

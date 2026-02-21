@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voyage Brésil 2026 🇧🇷</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇧🇷</text></svg>">
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
+    <div class="nav-links">
+      <a href="index.html">🏠 Accueil</a>
+      <a href="flights.html">✈️ Vols</a>
+      <a href="lodgings.html">🏨 Hébergements</a>
+      <a href="transport.html">🚗 Transport</a>
+      <a href="payments.html">💰 Paiements</a>
+      <a href="contacts.html">📞 Contacts</a>
+      <a href="checklist.html">✅ Checklist</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <a class="nav-admin-link" href="admin.html">⚙️ Admin</a>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>🌎 Tableau de bord — Voyage Brésil 2026</h1>
+      <p>Bienvenue! Retrouvez ici toutes les informations de votre voyage.</p>
+    </div>
+
+    <!-- Trip summary cards -->
+    <div class="dashboard-grid">
+      <a class="dash-card" href="flights.html">
+        <div class="icon">✈️</div>
+        <h3>Vols</h3>
+        <p>7 vols planifiés</p>
+        <span class="badge" id="flights-badge">…</span>
+      </a>
+      <a class="dash-card" href="lodgings.html">
+        <div class="icon">🏨</div>
+        <h3>Hébergements</h3>
+        <p>5 établissements</p>
+        <span class="badge" id="lodgings-badge">…</span>
+      </a>
+      <a class="dash-card" href="transport.html">
+        <div class="icon">🚗</div>
+        <h3>Transport</h3>
+        <p>Location voiture</p>
+        <span class="badge" id="transport-badge">Localiza</span>
+      </a>
+      <a class="dash-card" href="payments.html">
+        <div class="icon">💰</div>
+        <h3>Paiements</h3>
+        <p>Résumé par personne</p>
+        <span class="badge" id="payments-badge">…</span>
+      </a>
+      <a class="dash-card" href="contacts.html">
+        <div class="icon">📞</div>
+        <h3>Contacts</h3>
+        <p>Hôtels, compagnies, urgences</p>
+        <span class="badge">15 contacts</span>
+      </a>
+      <a class="dash-card" href="checklist.html">
+        <div class="icon">✅</div>
+        <h3>Checklist</h3>
+        <p>Actions avant départ</p>
+        <span class="badge" id="checklist-badge">…</span>
+      </a>
+    </div>
+
+    <!-- Travellers -->
+    <div class="card" style="margin-top:2rem">
+      <h2>👥 Voyageurs</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Nom</th><th>Rôle</th><th>Début voyage</th><th>Fin voyage</th><th>Retour</th></tr>
+          </thead>
+          <tbody id="travellers-tbody">
+            <tr><td colspan="5" class="loading-center"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="card">
+      <h2>⚠️ Alertes & Actions urgentes</h2>
+      <div id="alerts-container">
+        <div class="loading-center"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Itinerary overview -->
+    <div class="card">
+      <h2>📅 Itinéraire résumé</h2>
+      <div id="itinerary-container">
+        <div class="loading-center"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Voyage Brésil 2026 · Données gérées via <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script type="module">
+    import { supabase } from './assets/supabaseClient.js';
+    import { fmtDate, escHtml, statusBadge } from './assets/public.js';
+
+    async function loadDashboard() {
+      try {
+        const [
+          { data: travellers },
+          { data: flights },
+          { data: lodgings },
+          { data: checklist },
+          { data: payments },
+        ] = await Promise.all([
+          supabase.from('travellers').select('*').order('id'),
+          supabase.from('flights').select('id,payment_status,is_surprise').eq('is_surprise', false),
+          supabase.from('lodgings').select('id,is_surprise').eq('is_surprise', false),
+          supabase.from('checklist_items').select('id,done,is_surprise').eq('is_surprise', false),
+          supabase.from('participants_payments').select('traveller_id,price_chf,price_brl,paid'),
+        ]);
+
+        // Travellers
+        const tbody = document.getElementById('travellers-tbody');
+        if (travellers) {
+          tbody.innerHTML = travellers.map(t => `<tr>
+            <td><strong>${escHtml(t.name)}</strong></td>
+            <td>${escHtml(t.role)}</td>
+            <td>${fmtDate(t.trip_start)}</td>
+            <td>${t.trip_end ? fmtDate(t.trip_end) : '<em>en cours</em>'}</td>
+            <td>${escHtml(t.return_by)}</td>
+          </tr>`).join('');
+        }
+
+        // Badges
+        if (flights) document.getElementById('flights-badge').textContent = `${flights.length} vols`;
+        if (lodgings) document.getElementById('lodgings-badge').textContent = `${lodgings.length} hôtels`;
+        if (checklist) {
+          const done = checklist.filter(c => c.done).length;
+          document.getElementById('checklist-badge').textContent = `${done}/${checklist.length}`;
+        }
+        if (payments) {
+          const totalChf = payments.reduce((s, p) => s + (p.price_chf || 0), 0);
+          document.getElementById('payments-badge').textContent = `~${Math.round(totalChf)} CHF`;
+        }
+
+        // Alerts
+        renderAlerts();
+
+        // Itinerary
+        renderItinerary();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderAlerts() {
+      const container = document.getElementById('alerts-container');
+      const alerts = [
+        { level: 'danger',  text: '🔴 4 NUITS HÉBERGEMENT MANQUANT (03/06 → 05/06) — Réserver dès que possible!' },
+        { level: 'danger',  text: '🔴 Vols Azul EN ESPERA (MJ5NQC + ON3LQT) — Vérifier la confirmation.' },
+        { level: 'danger',  text: '🔴 DEADLINES: Encontro du Sol 09/04, ASAS DEL MAR 04/05, Pousada Bangalô 11/05' },
+        { level: 'warning', text: '🟠 Claudeane: 0 BAGAGE SOUTE SWISS (Economy Light) — Acheter franchise!' },
+        { level: 'warning', text: '🟠 Claudio: 0 BAGAGE SOUTE TAP (aller ET retour) — Vérifier/acheter.' },
+        { level: 'warning', text: '🟠 Azul: Bagages ET sièges = 0 pour 3 pax — Sélectionner sur app Azul.' },
+      ];
+
+      container.innerHTML = alerts.map(a =>
+        `<div class="alert alert-${a.level}">${escHtml(a.text)}</div>`
+      ).join('');
+    }
+
+    function renderItinerary() {
+      const container = document.getElementById('itinerary-container');
+      const rows = [
+        { date: '27/04', events: [{ type: 'flight', text: '✈️ Claudeane: GVA → GRU (SWISS LX2819+LX92, dép 20:05)' }] },
+        { date: '28/04', events: [{ type: 'hotel', text: '🏨 Claudeane arrivée São Paulo 05:25 → Free Palace Hotel' }] },
+        { date: '30/04–06/05', events: [{ type: 'hotel', text: '🏠 Claudeane chez sa fille à São Paulo' }] },
+        { date: '07/05', events: [{ type: 'flight', text: '✈️ Claudeane: VCP → BEL → Ourilândia (Azul, dép 21:45) ⭐' }] },
+        { date: '09/05–22/05', events: [{ type: 'surprise', text: '⭐ Claudeane à Ourilândia do Norte (famille)' }] },
+        { date: '23/05', events: [
+          { type: 'flight', text: '✈️ Claudio: GVA → Lisbonne → FOR (TAP, dép 13:00)' },
+          { type: 'hotel', text: '🏨 Claudio → Maly Boutique Hotel, Fortaleza' },
+        ]},
+        { date: '25/05', events: [
+          { type: 'flight', text: '✈️ Claudeane+Lucileide+Jhemerson: MAB→BEL→FOR (Azul)' },
+          { type: 'hotel', text: '🏨 Encontro do Sol, Fortaleza (tous)' },
+        ]},
+        { date: '27/05', events: [{ type: 'car', text: '🚗 Route Fortaleza → Canoa Quebrada → ASAS DEL MAR' }] },
+        { date: '30/05–31/05', events: [{ type: 'hotel', text: '⚠️ HÉBERGEMENT MANQUANT (30-31/05)' }] },
+        { date: '01/06–02/06', events: [{ type: 'hotel', text: '🏨 Pousada Bangalô, Jericoacoara' }] },
+        { date: '03/06–04/06', events: [{ type: 'hotel', text: '⚠️ HÉBERGEMENT MANQUANT (03-04/06) — À réserver!' }] },
+        { date: '05/06', events: [
+          { type: 'car', text: '🚗 Retour Localiza 18h00' },
+          { type: 'flight', text: '✈️ Claudio+Claudeane: FOR → LIS → GVA (TAP, dép 22:50)' },
+        ]},
+        { date: '06/06', events: [{ type: 'hotel', text: '🏠 Arrivée Genève 17:30' }] },
+      ];
+
+      const typeClass = { flight: 'event-flight', hotel: 'event-hotel', car: 'event-car', surprise: 'event-surprise' };
+
+      container.innerHTML = rows.map(r => `
+        <div class="itinerary-row">
+          <div class="itinerary-date">${r.date}</div>
+          <div class="itinerary-events">
+            ${r.events.map(e => `<span class="event-pill ${typeClass[e.type] || ''}">${escHtml(e.text)}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>
