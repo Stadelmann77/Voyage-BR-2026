@@ -208,6 +208,13 @@ const ptBR = {
   'checklist.err.update':    'Erro ao atualizar.',
   'checklist.err.network':   '❌ Erro de rede. Tente novamente.',
 
+  // ── Offline mode ─────────────────────────────────────────────
+  'offline.banner.title': '📴 Modo offline (CSV) — Supabase não configurado',
+  'offline.banner.msg':   'Os dados são carregados do arquivo CSV integrado. Todas as páginas estão acessíveis em modo leitura.',
+  'offline.banner.hint':  'Para ativar a sincronização em tempo real e o checklist compartilhado, configure o Supabase (veja o README).',
+  'offline.payments.msg': '💳 Os totais de pagamento por pessoa exigem conexão com o Supabase. Configure <code>assets/config.js</code> para exibir esses dados.',
+  'offline.checklist.hint': '📴 Modo offline — as marcações são salvas localmente neste dispositivo (não compartilhadas).',
+
   // ── Pages — Admin ────────────────────────────────────────────
   'page.admin.title':     '⚙️ Administração',
   'page.admin.subtitle':  'Gestão de dados — acesso reservado ao administrador.',

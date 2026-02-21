@@ -129,6 +129,20 @@ nav {
   border-color: #fff;
 }
 
+/* ── Offline mode banner ─────────────────────────────────── */
+.offline-mode-banner {
+  background: #EFF6FF;
+  border: 2px solid #3B82F6;
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #1D4ED8;
+  font-size: .9rem;
+}
+
+.offline-mode-banner strong { color: #1E40AF; font-size: 1rem; }
+.offline-mode-banner p { margin: .4rem 0 0; }
+
 /* ── Config error banner ──────────────────────────────────── */
 .config-error-banner {
   background: #FEF3C7;

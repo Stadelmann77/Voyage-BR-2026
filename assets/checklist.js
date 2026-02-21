@@ -1,9 +1,12 @@
 // assets/checklist.js
 // Checklist page: load items, PIN-protected toggling, surprise items support.
+// In offline mode (!configOk): items from built-in list, state in localStorage.
 
 import { fetchChecklist, showError, showLoading, escHtml, fmtDate } from './public.js';
-import { FUNCTIONS_URL } from './supabaseClient.js';
+import { configOk, FUNCTIONS_URL } from './supabaseClient.js';
 import { t } from './i18n.js';
+
+const LS_STATE_KEY = 'checklist_state'; // localStorage key for offline mode
 
 let checklistPin = '';
 let userName = '';
@@ -14,6 +17,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (surpriseUnlocked) {
     const raw = sessionStorage.getItem('surprise_data');
     if (raw) { try { surpriseData = JSON.parse(raw); } catch(_) {} }
+  }
+
+  // Show offline hint banner if in offline mode
+  if (!configOk) {
+    const container = document.getElementById('checklist-container');
+    if (container) {
+      const hint = document.createElement('div');
+      hint.className = 'alert alert-info';
+      hint.setAttribute('data-i18n', 'offline.checklist.hint');
+      hint.textContent = t('offline.checklist.hint');
+      container.parentElement.insertBefore(hint, container);
+    }
   }
 
   setupPinBar();
@@ -28,13 +43,32 @@ function setupPinBar() {
 
   if (!saveBtn) return;
 
-  saveBtn.addEventListener('click', () => {
-    checklistPin = pinInput?.value?.trim() || '';
-    userName     = nameInput?.value?.trim() || '';
+  // In offline mode, restore saved name from localStorage and hide the PIN field
+  if (!configOk) {
+    const saved = localStorage.getItem('checklist_user_name');
+    if (saved && nameInput) nameInput.value = saved;
+    // Hide PIN icon, label, and input — no server-side PIN check in offline mode
+    document.querySelector('[data-i18n="checklist.pin.icon"]')?.setAttribute('style', 'display:none');
+    document.querySelector('[data-i18n="checklist.pin.label"]')?.setAttribute('style', 'display:none');
+    if (pinInput) pinInput.setAttribute('style', 'display:none');
+  }
 
-    if (!checklistPin || !userName) {
-      alert(t('checklist.needPin'));
-      return;
+  saveBtn.addEventListener('click', () => {
+    if (!configOk) {
+      // Offline mode: only name is needed
+      userName = nameInput?.value?.trim() || '';
+      if (!userName) {
+        alert(t('checklist.needPin'));
+        return;
+      }
+      localStorage.setItem('checklist_user_name', userName);
+    } else {
+      checklistPin = pinInput?.value?.trim() || '';
+      userName     = nameInput?.value?.trim() || '';
+      if (!checklistPin || !userName) {
+        alert(t('checklist.needPin'));
+        return;
+      }
     }
 
     saveBtn.textContent = t('checklist.unlock.done');
@@ -57,6 +91,16 @@ async function loadChecklist() {
     let allItems = [...items];
     if (surpriseUnlocked && surpriseData?.checklist) {
       allItems = [...allItems, ...surpriseData.checklist];
+    }
+
+    // In offline mode, overlay localStorage state onto items
+    if (!configOk) {
+      const state = JSON.parse(localStorage.getItem(LS_STATE_KEY) || '{}');
+      allItems = allItems.map(item => {
+        const saved = state[item.id];
+        if (!saved) return item;
+        return { ...item, done: saved.done, done_by: saved.done_by || null, done_at: saved.done_at || null };
+      });
     }
 
     renderChecklist(allItems, container);
@@ -133,6 +177,44 @@ async function handleToggle(e) {
   const itemId = cb.dataset.id;
   const done   = cb.checked;
 
+  if (!configOk) {
+    // Offline mode: persist to localStorage
+    if (!userName) {
+      cb.checked = !done; // revert
+      alert(t('checklist.needPinBar'));
+      return;
+    }
+    const state = JSON.parse(localStorage.getItem(LS_STATE_KEY) || '{}');
+    const now   = new Date().toISOString();
+    if (done) {
+      state[itemId] = { done: true, done_by: userName, done_at: now };
+    } else {
+      state[itemId] = { done: false, done_by: null, done_at: null };
+    }
+    localStorage.setItem(LS_STATE_KEY, JSON.stringify(state));
+
+    // Update UI
+    const wrapper = document.getElementById(`item-wrapper-${itemId}`);
+    if (wrapper) {
+      if (done) {
+        wrapper.classList.add('done-item');
+        let doneByEl = wrapper.querySelector('.item-done-by');
+        if (!doneByEl) {
+          doneByEl = document.createElement('div');
+          doneByEl.className = 'item-done-by';
+          wrapper.querySelector('.item-body').appendChild(doneByEl);
+        }
+        doneByEl.textContent = `${t('checklist.doneBy')} ${userName}`;
+      } else {
+        wrapper.classList.remove('done-item');
+        const doneByEl = wrapper.querySelector('.item-done-by');
+        if (doneByEl) doneByEl.remove();
+      }
+    }
+    return;
+  }
+
+  // Online mode: call Edge Function
   if (!checklistPin || !userName) {
     cb.checked = !done; // revert
     alert(t('checklist.needPinBar'));

@@ -1,7 +1,9 @@
 // assets/public.js
-// Shared helpers for all public pages: loading data from Supabase and rendering utilities.
+// Shared helpers for all public pages: loading data from Supabase (online)
+// or CSV (offline) and rendering utilities.
 
 import { supabase, configOk } from './supabaseClient.js';
+import { loadCsvData, DEFAULT_CHECKLIST } from './csvData.js';
 import { t } from './i18n.js';
 
 // ── Navigation active link ──────────────────────────────────
@@ -11,31 +13,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (a.getAttribute('href') === path) a.classList.add('active');
   });
 
-  // Show config error banner if Supabase is not configured
+  // Show offline mode banner if Supabase is not configured
   if (!configOk) {
-    showConfigBanner();
+    showOfflineBanner();
   }
 });
 
-// ── Config error banner ─────────────────────────────────────
-export function showConfigBanner() {
-  if (document.getElementById('config-error-banner')) return; // already shown
+// ── Offline mode banner ─────────────────────────────────────
+export function showOfflineBanner() {
+  if (document.getElementById('offline-mode-banner')) return; // already shown
   const main = document.querySelector('main');
   if (!main) return;
 
   const banner = document.createElement('div');
-  banner.id = 'config-error-banner';
-  banner.className = 'config-error-banner';
+  banner.id = 'offline-mode-banner';
+  banner.className = 'offline-mode-banner';
   banner.innerHTML = `
-    <strong data-i18n="error.config.title">${t('error.config.title')}</strong>
-    <p data-i18n="error.config.msg">${t('error.config.msg')}</p>
-    <p><strong data-i18n="error.config.next">${t('error.config.next')}</strong></p>
-    <ol>
-      <li data-i18n="error.config.step1">${t('error.config.step1')}</li>
-      <li data-i18n="error.config.step2">${t('error.config.step2')}</li>
-      <li data-i18n="error.config.step3">${t('error.config.step3')}</li>
-    </ol>`;
+    <strong data-i18n="offline.banner.title">${t('offline.banner.title')}</strong>
+    <p data-i18n="offline.banner.msg">${t('offline.banner.msg')}</p>
+    <p><small data-i18n="offline.banner.hint">${t('offline.banner.hint')}</small></p>`;
   main.insertBefore(banner, main.firstChild);
+}
+
+// ── Config error banner (kept for backwards compatibility) ──
+export function showConfigBanner() {
+  showOfflineBanner();
 }
 
 // ── Generic error display ───────────────────────────────────
@@ -67,6 +69,10 @@ export function showLoading(container) {
 
 // ── Fetch helpers ───────────────────────────────────────────
 export async function fetchFlights(surpriseUnlocked = false) {
+  if (!configOk) {
+    const csv = await loadCsvData();
+    return csv.flights.filter(f => !f.is_surprise);
+  }
   let query = supabase
     .from('flights')
     .select('*, origin:airports!origin_iata(iata,city,lat,lon), destination:airports!destination_iata(iata,city,lat,lon)')
@@ -78,6 +84,10 @@ export async function fetchFlights(surpriseUnlocked = false) {
 }
 
 export async function fetchLodgings(surpriseUnlocked = false) {
+  if (!configOk) {
+    const csv = await loadCsvData();
+    return csv.lodgings.filter(l => !l.is_surprise);
+  }
   let query = supabase.from('lodgings').select('*').order('checkin_date');
   if (!surpriseUnlocked) query = query.eq('is_surprise', false);
   const { data, error } = await query;
@@ -86,24 +96,37 @@ export async function fetchLodgings(surpriseUnlocked = false) {
 }
 
 export async function fetchTransport() {
+  if (!configOk) {
+    const csv = await loadCsvData();
+    return csv.transport;
+  }
   const { data, error } = await supabase.from('transport').select('*').order('start_date');
   if (error) throw error;
   return data;
 }
 
 export async function fetchContacts() {
+  if (!configOk) {
+    const csv = await loadCsvData();
+    return csv.contacts;
+  }
   const { data, error } = await supabase.from('contacts').select('*').order('id');
   if (error) throw error;
   return data;
 }
 
 export async function fetchTravellers() {
+  if (!configOk) {
+    const csv = await loadCsvData();
+    return csv.travellers;
+  }
   const { data, error } = await supabase.from('travellers').select('*').order('id');
   if (error) throw error;
   return data;
 }
 
 export async function fetchPayments() {
+  if (!configOk) return [];
   const { data, error } = await supabase
     .from('participants_payments')
     .select('*, traveller:travellers(id,name)')
@@ -113,6 +136,9 @@ export async function fetchPayments() {
 }
 
 export async function fetchChecklist(surpriseUnlocked = false) {
+  if (!configOk) {
+    return DEFAULT_CHECKLIST.filter(i => !i.is_surprise);
+  }
   let query = supabase.from('checklist_items').select('*').order('category').order('id');
   if (!surpriseUnlocked) query = query.eq('is_surprise', false);
   const { data, error } = await query;
