@@ -140,18 +140,33 @@ console.log('\nTest 3: {Claudio, Lucileide, Jhemerson} → Claudio weight 1.0');
     `Claudio share is NOT the 1.25-weight value (${wrongValue.toFixed(4)})`);
 }
 
+// ── getEffectivePaidRatio (mirrors payments.html) ────────────────────────────
+// Priority rule: status ✅ → 1; paid_ratio wins over paid_amount; else derive
+// from paid_amount; else 0.
+
+function getEffectivePaidRatio(exp) {
+  if ((exp.status || '').startsWith('✅')) return 1;
+  if (exp.paid_ratio != null) return Math.min(1, Math.max(0, Number(exp.paid_ratio)));
+  if (exp.paid_amount != null) {
+    const amount = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
+    if (amount > 0) return Math.min(1, Math.max(0, Number(exp.paid_amount) / amount));
+  }
+  return 0;
+}
+
 // ── computePaidSummary (replicated from payments.html fix) ───────────────────
 
 function computePaidSummary(expenses, people, peopleMap) {
   const paidTotals = {};
   people.forEach(p => { paidTotals[p.name] = { chf: 0, brl: 0 }; });
   expenses.forEach(exp => {
-    if ((exp.status || '').startsWith('✅')) {
+    const ratio = getEffectivePaidRatio(exp);
+    if (ratio > 0) {
       const shares = computeSplit(exp, peopleMap);
       Object.entries(shares).forEach(([name, s]) => {
         if (paidTotals[name]) {
-          paidTotals[name].chf += s.chf;
-          paidTotals[name].brl += s.brl;
+          paidTotals[name].chf += s.chf * ratio;
+          paidTotals[name].brl += s.brl * ratio;
         }
       });
     }
@@ -292,6 +307,91 @@ console.log('\nTest 9: Jhemerson quota = 0.5 for lodging (default unchanged)');
   const expectedJhemerson = 200 * 0.5 / 2.5; // = 40
   assert(approxEq(shares.Jhemerson.chf, expectedJhemerson, 1e-6),
     `Jhemerson lodging share = ${shares.Jhemerson.chf.toFixed(4)} (expected ${expectedJhemerson.toFixed(4)} with quota 0.5)`);
+}
+
+// ── Partial payment tests ─────────────────────────────────────────────────────
+
+// 10. paid_ratio=0.5 → JÁ PAGO reflects 50% of each beneficiary share
+console.log('\nTest 10: paid_ratio=0.5 → JÁ PAGO = 50% of shares');
+{
+  const expenses = [
+    {
+      amount_chf: null, amount_brl: 1000,
+      status: '⚠️ À PAYER',
+      paid_ratio: 0.5,
+      beneficiaries: ['Claudio'],
+    },
+  ];
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(paidTotals.Claudio.brl, 500, 1e-6),
+    `Claudio JÁ PAGO BRL = ${paidTotals.Claudio.brl.toFixed(4)} (expected 500, 50% of 1000)`);
+}
+
+// 11. paid_ratio takes priority over paid_amount when both are present
+console.log('\nTest 11: paid_ratio priority over paid_amount');
+{
+  const expenses = [
+    {
+      amount_chf: null, amount_brl: 1000,
+      status: '⚠️ À PAYER',
+      paid_ratio: 0.5,   // 50% → 500 BRL
+      paid_amount: 800,  // would be 80% if used — must be ignored
+      beneficiaries: ['Claudio'],
+    },
+  ];
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(paidTotals.Claudio.brl, 500, 1e-6),
+    `paid_ratio wins: Claudio JÁ PAGO BRL = ${paidTotals.Claudio.brl.toFixed(4)} (expected 500, not 800)`);
+  assert(!approxEq(paidTotals.Claudio.brl, 800, 1e-6),
+    'paid_amount (800) was NOT used when paid_ratio is present');
+}
+
+// 12. paid_amount only → derives ratio when no paid_ratio present
+console.log('\nTest 12: paid_amount only → derives paid ratio');
+{
+  const expenses = [
+    {
+      amount_chf: null, amount_brl: 1000,
+      status: '⚠️ À PAYER',
+      paid_amount: 300,  // 30%
+      beneficiaries: ['Claudio'],
+    },
+  ];
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(paidTotals.Claudio.brl, 300, 1e-6),
+    `paid_amount derives ratio: Claudio JÁ PAGO BRL = ${paidTotals.Claudio.brl.toFixed(4)} (expected 300)`);
+}
+
+// 13. getEffectivePaidRatio: ✅ status always returns 1 regardless of paid_ratio
+console.log('\nTest 13: ✅ status → ratio=1 regardless of paid_ratio');
+{
+  const exp = { amount_brl: 1000, status: '✅ Payé', paid_ratio: 0.3 };
+  assert(approxEq(getEffectivePaidRatio(exp), 1),
+    `✅ status → ratio = ${getEffectivePaidRatio(exp)} (expected 1)`);
+}
+
+// 14. Partial payment with multiple beneficiaries
+console.log('\nTest 14: partial payment split across multiple beneficiaries');
+{
+  const expenses = [
+    {
+      amount_chf: null, amount_brl: 1000,
+      status: '⚠️ À PAYER',
+      paid_ratio: 0.5,
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'],
+      category: 'lodging',
+    },
+  ];
+  // weights: Claudeane=1.0, Lucileide=1.0, Jhemerson=0.5 → totalWeight=2.5
+  // full shares: Claudeane=400, Lucileide=400, Jhemerson=200
+  // paid (×0.5): Claudeane=200, Lucileide=200, Jhemerson=100
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(paidTotals.Claudeane.brl, 200, 1e-6),
+    `Claudeane JÁ PAGO BRL = ${paidTotals.Claudeane.brl.toFixed(4)} (expected 200)`);
+  assert(approxEq(paidTotals.Lucileide.brl, 200, 1e-6),
+    `Lucileide JÁ PAGO BRL = ${paidTotals.Lucileide.brl.toFixed(4)} (expected 200)`);
+  assert(approxEq(paidTotals.Jhemerson.brl, 100, 1e-6),
+    `Jhemerson JÁ PAGO BRL = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected 100)`);
 }
 
 // ── Summary ──────────────────────────────────────────────────────────────────
