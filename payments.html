@@ -31,7 +31,10 @@
       border-radius: .75rem;
       padding: 1rem;
       background: #fff;
+      cursor: pointer;
+      transition: box-shadow .15s;
     }
+    .summary-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
     .summary-card h3 { margin: 0 0 .5rem; font-size: 1rem; }
     .summary-card .amount-chf { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
     .summary-card .amount-brl { font-size: .85rem; color: var(--text-light); }
@@ -40,6 +43,11 @@
     .summary-card .summary-label { font-size: .72rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; display: block; }
     .summary-card .amount-primary { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
     .summary-card .amount-secondary { font-size: .82rem; color: var(--text-light); }
+    /* Person detail modal */
+    #person-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    #person-modal-overlay.hidden { display:none; }
+    #person-modal { background:#fff; border-radius:1rem; padding:1.5rem; max-width:700px; width:95%; max-height:85vh; overflow-y:auto; position:relative; }
+    #person-modal-close { position:absolute; top:.75rem; right:1rem; font-size:1.5rem; cursor:pointer; background:none; border:none; }
   </style>
 </head>
 <body>
@@ -83,6 +91,14 @@
     <!-- Documents section (payment-related documents) -->
     <div id="documents-section" style="margin-top:1.5rem"></div>
   </main>
+
+  <!-- Person detail modal -->
+  <div id="person-modal-overlay" class="hidden" role="dialog" aria-modal="true">
+    <div id="person-modal">
+      <button id="person-modal-close" aria-label="Fermer">×</button>
+      <div id="person-modal-content"></div>
+    </div>
+  </div>
 
   <footer>
     <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> JSON</p>
@@ -160,10 +176,15 @@
     }
 
     // Returns the fraction [0,1] of an expense that has already been paid.
-    // Priority: ✅ status → 1; paid_ratio wins over paid_amount; else derive
+    // Priority: ✅ status → 1; payments array → sum/total; paid_ratio wins over paid_amount; else derive
     // from paid_amount/amount; else 0.
     function getEffectivePaidRatio(exp) {
       if ((exp.status || '').startsWith('✅')) return 1;
+      if (exp.payments) {
+        const paidSum = exp.payments.reduce((s, p) => s + (p.amount_brl || 0) + (p.amount_chf || 0), 0);
+        const total = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
+        if (total > 0) return Math.min(1, Math.max(0, paidSum / total));
+      }
       if (exp.paid_ratio != null) return Math.min(1, Math.max(0, Number(exp.paid_ratio)));
       if (exp.paid_amount != null) {
         const amount = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
@@ -214,20 +235,29 @@
           return { exp, shares };
         });
 
-        // Accumulate per-person paid totals — scale each share by the effective
-        // paid ratio: 1 for fully paid (✅), paid_ratio if set, derived from
-        // paid_amount if available, otherwise 0.
+        // Accumulate per-person paid totals:
+        // - If exp.payments array exists: credit each payer directly from the payments array.
+        // - Otherwise: scale each beneficiary's share by the effective paid ratio.
         const paidTotals = {};
         people.forEach(p => { paidTotals[p.name] = { chf: 0, brl: 0 }; });
         expenseRows.forEach(({ exp, shares }) => {
-          const ratio = getEffectivePaidRatio(exp);
-          if (ratio > 0) {
-            Object.entries(shares).forEach(([name, s]) => {
-              if (paidTotals[name]) {
-                paidTotals[name].chf += s.chf * ratio;
-                paidTotals[name].brl += s.brl * ratio;
+          if (exp.payments) {
+            exp.payments.forEach(({ by, amount_brl, amount_chf }) => {
+              if (paidTotals[by]) {
+                paidTotals[by].brl += amount_brl || 0;
+                paidTotals[by].chf += amount_chf || 0;
               }
             });
+          } else {
+            const ratio = getEffectivePaidRatio(exp);
+            if (ratio > 0) {
+              Object.entries(shares).forEach(([name, s]) => {
+                if (paidTotals[name]) {
+                  paidTotals[name].chf += s.chf * ratio;
+                  paidTotals[name].brl += s.brl * ratio;
+                }
+              });
+            }
           }
         });
 
@@ -284,36 +314,36 @@
             const totalBrl  = tot.brl  + tot.chf  * rate;
             const paidBrl   = paid.brl + paid.chf  * fallbackRate;
             const remainingBrl = (tot.brl - paid.brl) + (tot.chf - paid.chf) * rate;
-            html += `<div class="summary-card">
+            html += `<div class="summary-card" data-person="${escHtml(p.name)}" role="button" tabindex="0">
               <h3>👤 ${escHtml(p.name)}</h3>
               <div class="summary-row">
-                <span class="summary-label">${t('payments.due')}</span>
+                <span class="summary-label">${t('payments.gastoTotal')}</span>
                 <span class="amount-primary">${fmtBrl(totalBrl)}</span>
               </div>
               <div class="summary-row">
-                <span class="summary-label">${t('payments.paid')}</span>
+                <span class="summary-label">${t('payments.totalPago')}</span>
                 <span class="amount-primary">${fmtBrl(paidBrl)}</span>
               </div>
               <div class="summary-row">
-                <span class="summary-label">${t('payments.remaining')}</span>
+                <span class="summary-label">${t('payments.aindaPagar')}</span>
                 <span class="amount-primary">${fmtBrl(remainingBrl)}</span>
               </div>
             </div>`;
           } else {
             // CHF primary + BRL secondary
             // "due" and "remaining" use current live rate; "paid" uses frozen fallback rate
-            html += `<div class="summary-card">
+            html += `<div class="summary-card" data-person="${escHtml(p.name)}" role="button" tabindex="0">
               <h3>👤 ${escHtml(p.name)} <small style="font-weight:400;opacity:.7">×${p.weight}</small></h3>
               <div class="summary-row">
-                <span class="summary-label">${t('payments.due')}</span>
+                <span class="summary-label">${t('payments.gastoTotal')}</span>
                 <span class="amount-primary">${fmtChf(tot.chf)}</span>${brlSecondary(tot.chf, tot.brl, rate)}
               </div>
               <div class="summary-row">
-                <span class="summary-label">${t('payments.paid')}</span>
+                <span class="summary-label">${t('payments.totalPago')}</span>
                 <span class="amount-primary">${fmtChf(paid.chf)}</span>${brlSecondary(paid.chf, paid.brl, fallbackRate)}
               </div>
               <div class="summary-row">
-                <span class="summary-label">${t('payments.remaining')}</span>
+                <span class="summary-label">${t('payments.aindaPagar')}</span>
                 <span class="amount-primary">${fmtChf(remainChf)}</span>${brlSecondary(remainChf, remainBrl, rate)}
               </div>
             </div>`;
@@ -330,6 +360,7 @@
               <th>${t('th.payment.detail')}</th>
               <th>${t('th.payment.chf')}</th>
               <th>${t('th.payment.brl')}</th>
+              <th>${t('payments.paidBy')}</th>
               <th>${t('payments.beneficiaries')}</th>
               <th>${t('th.payment.status')}</th>
             </tr></thead>
@@ -340,11 +371,19 @@
         expenseRows.forEach(({ exp, shares }) => {
           const cat = exp.category || 'other';
           const label = catEmoji[cat] ? catEmoji[cat] + ' ' + cat : cat;
+          // Build "Payé par" chips
+          let paidByHtml;
+          if (exp.payments) {
+            paidByHtml = exp.payments.map(p => `<span class="chip person">${escHtml(p.by)}</span>`).join(' ');
+          } else {
+            paidByHtml = exp.paid_by ? `<span class="chip person">${escHtml(exp.paid_by)}</span>` : '—';
+          }
           html += `<tr class="expense-row">
             <td><span class="chip cat-${escHtml(cat)}">${escHtml(label)}</span></td>
             <td title="${escHtml(exp.notes || '')}">${escHtml(exp.label)}</td>
             <td>${exp.amount_chf ? Number(exp.amount_chf).toLocaleString('fr-CH', { maximumFractionDigits: 2 }) : '—'}</td>
             <td>${exp.amount_brl ? 'R$\u00a0' + Number(exp.amount_brl).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '—'}</td>
+            <td><div class="beneficiary-chips">${paidByHtml}</div></td>
             <td><div class="beneficiary-chips">
               ${(exp.beneficiaries || []).map(b => {
                 const s = shares[b] || {};
@@ -390,6 +429,67 @@
         </div>`;
 
         container.innerHTML = html;
+
+        // ── Clickable summary cards → person detail modal ────────
+        // Build modal content for a person: table of their expenses
+        function buildPersonModal(personName) {
+          const isBrlOnly = BRL_ONLY_PEOPLE.has(personName);
+          const rows = expenseRows.filter(({ exp }) =>
+            (exp.beneficiaries || []).includes(personName));
+
+          function modalExpRow(filterFn, sectionRate) {
+            return rows.filter(filterFn).map(({ exp, shares }) => {
+              const s = shares[personName] || {};
+              const ratio = getEffectivePaidRatio(exp);
+              const amtDisplay = isBrlOnly
+                ? fmtBrl(s.brl + s.chf * (sectionRate || rate))
+                : fmtChf(s.chf) + (s.brl > 0.005 ? ' / ' + fmtBrl(s.brl) : '');
+              return `<tr>
+                <td style="font-size:.8rem">${escHtml(exp.label)}</td>
+                <td>${amtDisplay}</td>
+                <td>${Math.round(ratio * 100)}%</td>
+              </tr>`;
+            }).join('');
+          }
+
+          const thStyle = 'style="text-align:left;padding:.35rem .5rem;border-bottom:1px solid #e5e7eb"';
+          const tblHdr = `<thead><tr>
+            <th ${thStyle}>${escHtml(t('th.payment.detail'))}</th>
+            <th ${thStyle}>${escHtml(t('th.payment.brl'))}</th>
+            <th ${thStyle}>%</th>
+          </tr></thead>`;
+
+          const allRows   = modalExpRow(() => true);
+          const paidRows  = modalExpRow(({ exp }) => getEffectivePaidRatio(exp) > 0);
+          const unpaidRows= modalExpRow(({ exp }) => getEffectivePaidRatio(exp) < 1);
+
+          return `<h2>👤 ${escHtml(personName)} — ${escHtml(t('payments.modal.title'))}</h2>
+            <h3 style="margin:.75rem 0 .25rem">${escHtml(t('payments.modal.gastoTotal'))}</h3>
+            <div class="table-wrap"><table>${tblHdr}<tbody>${allRows || '<tr><td colspan="3">—</td></tr>'}</tbody></table></div>
+            <h3 style="margin:.75rem 0 .25rem">${escHtml(t('payments.modal.totalPago'))}</h3>
+            <div class="table-wrap"><table>${tblHdr}<tbody>${paidRows || '<tr><td colspan="3">—</td></tr>'}</tbody></table></div>
+            <h3 style="margin:.75rem 0 .25rem">${escHtml(t('payments.modal.aindaPagar'))}</h3>
+            <div class="table-wrap"><table>${tblHdr}<tbody>${unpaidRows || '<tr><td colspan="3">—</td></tr>'}</tbody></table></div>`;
+        }
+
+        const overlay = document.getElementById('person-modal-overlay');
+        const modalContent = document.getElementById('person-modal-content');
+        const closeBtn = document.getElementById('person-modal-close');
+
+        function openModal(personName) {
+          modalContent.innerHTML = buildPersonModal(personName);
+          overlay.classList.remove('hidden');
+        }
+        function closeModal() {
+          overlay.classList.add('hidden');
+        }
+
+        document.querySelectorAll('.summary-card[data-person]').forEach(card => {
+          card.addEventListener('click', () => openModal(card.dataset.person));
+          card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openModal(card.dataset.person); });
+        });
+        closeBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
       } catch (err) {
         container.innerHTML = `<div class="alert alert-danger">⚠️ ${escHtml(err.message)}</div>`;
       }

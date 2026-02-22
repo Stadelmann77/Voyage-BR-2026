@@ -401,37 +401,57 @@ async function loadPaymentsAdmin(body) {
         <th>Statut</th><th>Payé %</th><th>Montant payé</th>
       </tr></thead>
       <tbody>
-        ${expenses.map(exp => `<tr>
-          <td style="font-size:.8rem">${escHtml(exp.id)}</td>
-          <td style="max-width:200px;font-size:.85rem">${escHtml(exp.label)}</td>
-          <td style="font-size:.85rem">${exp.amount_chf ?? '—'}</td>
-          <td style="font-size:.85rem">${exp.amount_brl ?? '—'}</td>
-          <td>
-            <select data-exp="${escHtml(exp.id)}" data-field="paid_by" style="font-size:.85rem">
-              ${peopleNames.map(n => `<option value="${escHtml(n)}" ${n === exp.paid_by ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}
-            </select>
-          </td>
-          ${peopleNames.map(n => `<td style="text-align:center">
-            <input type="checkbox" data-exp="${escHtml(exp.id)}" data-person="${escHtml(n)}"
-              ${(exp.beneficiaries || []).includes(n) ? 'checked' : ''}>
-          </td>`).join('')}
-          <td>
-            <input type="text" data-exp="${escHtml(exp.id)}" data-field="status"
-              value="${escHtml(exp.status || '')}" style="width:180px;font-size:.8rem">
-          </td>
-          <td>
-            <input type="number" min="0" max="100" step="1"
-              data-exp="${escHtml(exp.id)}" data-field="paid_pct"
-              value="${exp.paid_ratio != null ? Math.round(Number(exp.paid_ratio) * 100) : ''}"
-              style="width:60px;font-size:.85rem" placeholder="0–100">
-          </td>
-          <td>
-            <input type="text"
-              data-exp="${escHtml(exp.id)}" data-field="paid_amount"
-              value="${exp.paid_amount != null ? exp.paid_amount : ''}"
-              style="width:80px;font-size:.85rem" placeholder="montant">
-          </td>
-        </tr>`).join('')}
+        ${expenses.map(exp => {
+          // Build initial payer rows HTML for multi-payer editor
+          const payerRows = exp.payments
+            ? exp.payments.map((p, i) => `
+                <div class="payer-row" data-exp="${escHtml(exp.id)}" data-idx="${i}" style="display:flex;gap:.25rem;align-items:center;margin-bottom:.2rem">
+                  <select class="payer-name" style="font-size:.8rem">
+                    ${peopleNames.map(n => `<option value="${escHtml(n)}" ${n === p.by ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}
+                  </select>
+                  <input class="payer-amount" type="number" step="0.01" min="0" value="${p.amount_brl ?? p.amount_chf ?? ''}" style="width:70px;font-size:.8rem" placeholder="montant">
+                  <button class="btn-remove-payer" type="button" style="font-size:.8rem;padding:.1rem .35rem;background:#fee2e2;border:none;border-radius:.25rem;cursor:pointer">×</button>
+                </div>`).join('')
+            : `<div class="payer-row" data-exp="${escHtml(exp.id)}" data-idx="0" style="display:flex;gap:.25rem;align-items:center;margin-bottom:.2rem">
+                <select class="payer-name" style="font-size:.8rem">
+                  ${peopleNames.map(n => `<option value="${escHtml(n)}" ${n === exp.paid_by ? 'selected' : ''}>${escHtml(n)}</option>`).join('')}
+                </select>
+                <input class="payer-amount" type="number" step="0.01" min="0" value="" style="width:70px;font-size:.8rem" placeholder="montant">
+                <button class="btn-remove-payer" type="button" style="font-size:.8rem;padding:.1rem .35rem;background:#fee2e2;border:none;border-radius:.25rem;cursor:pointer">×</button>
+              </div>`;
+          return `<tr>
+            <td style="font-size:.8rem">${escHtml(exp.id)}</td>
+            <td style="max-width:200px;font-size:.85rem">${escHtml(exp.label)}</td>
+            <td style="font-size:.85rem">${exp.amount_chf ?? '—'}</td>
+            <td style="font-size:.85rem">${exp.amount_brl ?? '—'}</td>
+            <td>
+              <div class="payers-editor" data-exp="${escHtml(exp.id)}" style="min-width:220px">
+                <div class="payer-rows">${payerRows}</div>
+                <button class="btn-add-payer" type="button" data-exp="${escHtml(exp.id)}" style="font-size:.75rem;padding:.1rem .4rem;margin-top:.2rem">+ Ajouter</button>
+              </div>
+            </td>
+            ${peopleNames.map(n => `<td style="text-align:center">
+              <input type="checkbox" data-exp="${escHtml(exp.id)}" data-person="${escHtml(n)}"
+                ${(exp.beneficiaries || []).includes(n) ? 'checked' : ''}>
+            </td>`).join('')}
+            <td>
+              <input type="text" data-exp="${escHtml(exp.id)}" data-field="status"
+                value="${escHtml(exp.status || '')}" style="width:180px;font-size:.8rem">
+            </td>
+            <td>
+              <input type="number" min="0" max="100" step="1"
+                data-exp="${escHtml(exp.id)}" data-field="paid_pct"
+                value="${exp.paid_ratio != null ? Math.round(Number(exp.paid_ratio) * 100) : ''}"
+                style="width:60px;font-size:.85rem" placeholder="0–100">
+            </td>
+            <td>
+              <input type="text"
+                data-exp="${escHtml(exp.id)}" data-field="paid_amount"
+                value="${exp.paid_amount != null ? exp.paid_amount : ''}"
+                style="width:80px;font-size:.85rem" placeholder="montant">
+            </td>
+          </tr>`;
+        }).join('')}
       </tbody>
     </table></div>
     <div id="expenses-save-msg" style="margin-top:.75rem"></div>`;
@@ -464,6 +484,32 @@ async function loadPaymentsAdmin(body) {
     }
   });
 
+  // Multi-payer editor: add/remove payer rows
+  body.addEventListener('click', e => {
+    if (e.target.classList.contains('btn-add-payer')) {
+      const expId = e.target.dataset.exp;
+      const editor = body.querySelector(`.payers-editor[data-exp="${expId}"] .payer-rows`);
+      if (!editor) return;
+      const newRow = document.createElement('div');
+      newRow.className = 'payer-row';
+      newRow.dataset.exp = expId;
+      newRow.style.cssText = 'display:flex;gap:.25rem;align-items:center;margin-bottom:.2rem';
+      newRow.innerHTML = `<select class="payer-name" style="font-size:.8rem">
+        ${peopleNames.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('')}
+      </select>
+      <input class="payer-amount" type="number" step="0.01" min="0" value="" style="width:70px;font-size:.8rem" placeholder="montant">
+      <button class="btn-remove-payer" type="button" style="font-size:.8rem;padding:.1rem .35rem;background:#fee2e2;border:none;border-radius:.25rem;cursor:pointer">×</button>`;
+      editor.appendChild(newRow);
+    }
+    if (e.target.classList.contains('btn-remove-payer')) {
+      const row = e.target.closest('.payer-row');
+      const editor = row && row.closest('.payers-editor .payer-rows');
+      if (editor && editor.querySelectorAll('.payer-row').length > 1) {
+        row.remove();
+      }
+    }
+  });
+
   document.getElementById('save-expenses-btn').addEventListener('click', async () => {
     const msgEl = document.getElementById('expenses-save-msg');
     try {
@@ -474,10 +520,35 @@ async function loadPaymentsAdmin(body) {
           return cb && cb.checked;
         });
       });
-      // Collect paid_by and status
-      document.querySelectorAll('select[data-field="paid_by"]').forEach(sel => {
-        const idx = expenses.findIndex(e => e.id === sel.dataset.exp);
-        if (idx >= 0) expenses[idx].paid_by = sel.value;
+      // Collect payer data from multi-payer editors
+      body.querySelectorAll('.payers-editor').forEach(editor => {
+        const expId = editor.dataset.exp;
+        const idx = expenses.findIndex(e => e.id === expId);
+        if (idx < 0) return;
+        const rows = editor.querySelectorAll('.payer-row');
+        const isBrlExp = expenses[idx].amount_brl != null;
+        const payerEntries = [];
+        rows.forEach(row => {
+          const name = row.querySelector('.payer-name')?.value;
+          const amt = parseFloat(row.querySelector('.payer-amount')?.value);
+          if (name) {
+            const entry = { by: name };
+            if (!isNaN(amt) && amt > 0) {
+              if (isBrlExp) entry.amount_brl = roundCurrency(amt);
+              else          entry.amount_chf = roundCurrency(amt);
+            }
+            payerEntries.push(entry);
+          }
+        });
+        // If more than 1 payer, or the single payer has an explicit amount → use payments array
+        const hasAmounts = payerEntries.some(p => p.amount_brl != null || p.amount_chf != null);
+        if (payerEntries.length > 1 || (payerEntries.length === 1 && hasAmounts)) {
+          expenses[idx].payments = payerEntries;
+          delete expenses[idx].paid_by;
+        } else if (payerEntries.length === 1) {
+          expenses[idx].paid_by = payerEntries[0].by;
+          delete expenses[idx].payments;
+        }
       });
       document.querySelectorAll('input[data-field="status"]').forEach(inp => {
         const idx = expenses.findIndex(e => e.id === inp.dataset.exp);

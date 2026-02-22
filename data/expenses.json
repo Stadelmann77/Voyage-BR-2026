@@ -62,7 +62,11 @@
     "ref": "V6",
     "amount_chf": null,
     "amount_brl": 1300.17,
-    "paid_by": "Claudeane",
+    "payments": [
+      { "by": "Claudeane", "amount_brl": 433.39 },
+      { "by": "Lucileide", "amount_brl": 433.39 },
+      { "by": "Jhemerson", "amount_brl": 433.39 }
+    ],
     "beneficiaries": [
       "Claudeane",
       "Lucileide",
@@ -78,7 +82,11 @@
     "ref": "V7",
     "amount_chf": null,
     "amount_brl": 799.14,
-    "paid_by": "Claudeane",
+    "payments": [
+      { "by": "Claudeane", "amount_brl": 266.38 },
+      { "by": "Lucileide", "amount_brl": 266.38 },
+      { "by": "Jhemerson", "amount_brl": 266.38 }
+    ],
     "beneficiaries": [
       "Claudeane",
       "Lucileide",
@@ -124,7 +132,10 @@
     "amount_brl": 840,
     "paid_by": "Claudio",
     "beneficiaries": [
-      "Claudio"
+      "Claudio",
+      "Claudeane",
+      "Lucileide",
+      "Jhemerson"
     ],
     "status": "⚠️ À PAYÉ 50% le 05.01.2026",
     "paid_ratio": 0.5,
@@ -140,7 +151,10 @@
     "amount_brl": 1968,
     "paid_by": "Claudeane",
     "beneficiaries": [
-      "Claudeane"
+      "Claudio",
+      "Claudeane",
+      "Lucileide",
+      "Jhemerson"
     ],
     "status": "❌ NON PAYÉ — à payer su place",
     "notes": "Réf 6862089551"
@@ -156,7 +170,8 @@
     "beneficiaries": [
       "Claudio",
       "Claudeane",
-      "Lucileide"
+      "Lucileide",
+      "Jhemerson"
     ],
     "status": "❌ NON PAYÉ — à payer sur place",
     "notes": "Réf 5620.348.709"

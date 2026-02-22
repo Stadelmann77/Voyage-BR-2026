@@ -184,6 +184,15 @@ const ptBR = {
   'payments.brl.converted':   'R$ convertido',
   'payments.brl.receipt':     'R$ sem conversão',
   'payments.brl.total':       'R$ total',
+  'payments.gastoTotal':      'Gasto total',
+  'payments.totalPago':       'Total já pago',
+  'payments.aindaPagar':      'Ainda a pagar',
+  'payments.paidBy':          'Pago por',
+  'payments.modal.title':     'Detalhes',
+  'payments.modal.gastoTotal':'Gasto total',
+  'payments.modal.totalPago': 'Já pago',
+  'payments.modal.aindaPagar':'Ainda a pagar',
+  'payments.modal.close':     'Fechar',
 
   // ── Pages — Contacts ─────────────────────────────────────────
   'page.contacts.title':    '📞 Contatos & Endereços',

@@ -161,11 +161,16 @@ console.log('\nTest 3: {Claudio, Lucileide, Jhemerson} → equal split (not all 
 }
 
 // ── getEffectivePaidRatio (mirrors payments.html) ────────────────────────────
-// Priority rule: status ✅ → 1; paid_ratio wins over paid_amount; else derive
-// from paid_amount; else 0.
+// Priority rule: status ✅ → 1; payments array → sum/total; paid_ratio wins
+// over paid_amount; else derive from paid_amount; else 0.
 
 function getEffectivePaidRatio(exp) {
   if ((exp.status || '').startsWith('✅')) return 1;
+  if (exp.payments) {
+    const paidSum = exp.payments.reduce((s, p) => s + (p.amount_brl || 0) + (p.amount_chf || 0), 0);
+    const total = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
+    if (total > 0) return Math.min(1, Math.max(0, paidSum / total));
+  }
   if (exp.paid_ratio != null) return Math.min(1, Math.max(0, Number(exp.paid_ratio)));
   if (exp.paid_amount != null) {
     const amount = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
@@ -174,21 +179,31 @@ function getEffectivePaidRatio(exp) {
   return 0;
 }
 
-// ── computePaidSummary (replicated from payments.html fix) ───────────────────
+// ── computePaidSummary (replicated from payments.html) ───────────────────────
+// Handles multi-payer payments[] array: credit each payer directly.
 
 function computePaidSummary(expenses, people, peopleMap) {
   const paidTotals = {};
   people.forEach(p => { paidTotals[p.name] = { chf: 0, brl: 0 }; });
   expenses.forEach(exp => {
-    const ratio = getEffectivePaidRatio(exp);
-    if (ratio > 0) {
-      const shares = computeSplit(exp, peopleMap);
-      Object.entries(shares).forEach(([name, s]) => {
-        if (paidTotals[name]) {
-          paidTotals[name].chf += s.chf * ratio;
-          paidTotals[name].brl += s.brl * ratio;
+    if (exp.payments) {
+      exp.payments.forEach(({ by, amount_brl, amount_chf }) => {
+        if (paidTotals[by]) {
+          paidTotals[by].brl += amount_brl || 0;
+          paidTotals[by].chf += amount_chf || 0;
         }
       });
+    } else {
+      const ratio = getEffectivePaidRatio(exp);
+      if (ratio > 0) {
+        const shares = computeSplit(exp, peopleMap);
+        Object.entries(shares).forEach(([name, s]) => {
+          if (paidTotals[name]) {
+            paidTotals[name].chf += s.chf * ratio;
+            paidTotals[name].brl += s.brl * ratio;
+          }
+        });
+      }
     }
   });
   return paidTotals;
@@ -507,52 +522,141 @@ console.log('\nTest 18: paid uses fallbackRate; due/remaining use live rate');
     `receipt is rate-independent: due=${dDue.receipt?.toFixed(4)} paid=${dPaid.receipt?.toFixed(4)}`);
 }
 
-// 19. Lucileide BRL totals using actual expense data (after PR 16: amount_chf=null for E7-E11)
-console.log('\nTest 19: Lucileide BRL totals using actual expense data');
+// 19. Lucileide BRL totals using actual expense data (after beneficiary fixes: E11 has 4 pax)
+console.log('\nTest 19: Lucileide BRL totals using actual expense data (E11 = 4 pax, weighted split)');
 {
   const expenses = [
-    // E5: Vol MAB→BEL — paid ✅
+    // E5: Vol MAB→BEL — paid ✅ (multi-payer: each paid their own)
     { id: 'E5', category: 'flight', amount_chf: null, amount_brl: 1300.17,
-      status: '✅ Payé', beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
-    // E6: Vol BEL→FOR — paid ✅
+      status: '✅ Payé',
+      payments: [
+        { by: 'Claudeane', amount_brl: 433.39 },
+        { by: 'Lucileide', amount_brl: 433.39 },
+        { by: 'Jhemerson', amount_brl: 433.39 },
+      ],
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    // E6: Vol BEL→FOR — paid ✅ (multi-payer: each paid their own)
     { id: 'E6', category: 'flight', amount_chf: null, amount_brl: 799.14,
-      status: '✅ Payé', beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
-    // E11: Pousada Bangalô — unpaid ❌
+      status: '✅ Payé',
+      payments: [
+        { by: 'Claudeane', amount_brl: 266.38 },
+        { by: 'Lucileide', amount_brl: 266.38 },
+        { by: 'Jhemerson', amount_brl: 266.38 },
+      ],
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    // E11: Pousada Bangalô — unpaid ❌ — now 4 pax (weighted split)
     { id: 'E11', category: 'lodging', amount_chf: null, amount_brl: 861.12,
       status: '❌ NON PAYÉ — à payer sur place',
-      beneficiaries: ['Claudio', 'Claudeane', 'Lucileide'] },
+      beneficiaries: ['Claudio', 'Claudeane', 'Lucileide', 'Jhemerson'] },
   ];
 
-  const totals    = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const totals     = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
   const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
 
   const lucTot  = totals.Lucileide;
   const lucPaid = paidTotals.Lucileide;
 
-  // tot.brl = 1300.17/3 + 799.14/3 + 861.12/3 ≈ 986.81
-  const expectedTotBrl = (1300.17 + 799.14 + 861.12) / 3;
-  assert(approxEq(lucTot.brl, expectedTotBrl, 1e-6),
-    `Lucileide tot.brl = ${lucTot.brl.toFixed(2)} (expected ${expectedTotBrl.toFixed(2)} ≈ 986.81)`);
+  // E5+E6: equal split (3 pax, not all 4): each = 1/3
+  // E11: all 4 pax + non-flight → weighted split, total weight = 4.0, Lucileide weight = 1.0
+  //   Lucileide share of E11 = 861.12 × 1.0/4.0 = 215.28
+  const expectedE5share  = 1300.17 / 3;   // ≈ 433.39
+  const expectedE6share  = 799.14  / 3;   // ≈ 266.38
+  const expectedE11share = 861.12 * 1.0 / 4.0; // = 215.28
+  const expectedTotBrl = expectedE5share + expectedE6share + expectedE11share;
+  assert(approxEq(lucTot.brl, expectedTotBrl, 1e-4),
+    `Lucileide tot.brl = ${lucTot.brl.toFixed(2)} (expected ${expectedTotBrl.toFixed(2)})`);
 
-  // paid.brl = 1300.17/3 + 799.14/3 ≈ 699.77 (E5+E6 paid, E11 not)
-  const expectedPaidBrl = (1300.17 + 799.14) / 3;
-  assert(approxEq(lucPaid.brl, expectedPaidBrl, 1e-6),
-    `Lucileide paid.brl = ${lucPaid.brl.toFixed(2)} (expected ${expectedPaidBrl.toFixed(2)} ≈ 699.77)`);
+  // paid.brl = payments array amounts for E5 + E6 (E11 unpaid)
+  const expectedPaidBrl = 433.39 + 266.38; // direct from payments[]
+  assert(approxEq(lucPaid.brl, expectedPaidBrl, 1e-4),
+    `Lucileide paid.brl = ${lucPaid.brl.toFixed(2)} (expected ${expectedPaidBrl.toFixed(2)} from payments[])`);
 
-  // remainingBrl using fixed formula: (tot.brl - paid.brl) + (tot.chf - paid.chf) * rate
-  const rate = 6.5; // any rate; chf portions are 0 for these BRL-only expenses
-  const remainingBrl = (lucTot.brl - lucPaid.brl) + (lucTot.chf - lucPaid.chf) * rate;
-  const expectedRemaining = 861.12 / 3; // ≈ 287.04
-  assert(approxEq(remainingBrl, expectedRemaining, 1e-6),
-    `Lucileide remainingBrl = ${remainingBrl.toFixed(2)} (expected ${expectedRemaining.toFixed(2)} ≈ 287.04)`);
+  // remaining = tot - paid = E11 share only
+  const remainingBrl = (lucTot.brl - lucPaid.brl) + (lucTot.chf - lucPaid.chf) * 6.5;
+  assert(approxEq(remainingBrl, expectedE11share, 1e-4),
+    `Lucileide remainingBrl = ${remainingBrl.toFixed(2)} (expected ${expectedE11share.toFixed(2)} = E11 share only)`);
 
-  // Confirm CHF portions are 0 (all expenses are BRL-only for these beneficiaries)
-  assert(approxEq(lucTot.chf, 0),
-    `Lucileide tot.chf = ${lucTot.chf} (expected 0, all expenses are BRL-only)`);
-  assert(approxEq(lucPaid.chf, 0),
-    `Lucileide paid.chf = ${lucPaid.chf} (expected 0, all paid expenses are BRL-only)`);
+  // Paid flights contribute 0 to remaining (key fix)
+  assert(remainingBrl < expectedE5share,
+    `Remaining (${remainingBrl.toFixed(2)}) < E5 share (${expectedE5share.toFixed(2)}) — paid flights not in remaining`);
 }
 
+
+// 20. Multi-payer payments[] array: each payer credited individually in paidTotals
+console.log('\nTest 20: multi-payer payments[] credits each payer individually');
+{
+  const expenses = [
+    {
+      id: 'E5', category: 'flight', amount_chf: null, amount_brl: 1300.17,
+      status: '✅ Payé',
+      payments: [
+        { by: 'Claudeane', amount_brl: 433.39 },
+        { by: 'Lucileide', amount_brl: 433.39 },
+        { by: 'Jhemerson', amount_brl: 433.39 },
+      ],
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'],
+    },
+  ];
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(paidTotals.Claudeane.brl, 433.39, 1e-6),
+    `Claudeane paidTotals.brl = ${paidTotals.Claudeane.brl.toFixed(2)} (expected 433.39)`);
+  assert(approxEq(paidTotals.Lucileide.brl, 433.39, 1e-6),
+    `Lucileide paidTotals.brl = ${paidTotals.Lucileide.brl.toFixed(2)} (expected 433.39)`);
+  assert(approxEq(paidTotals.Jhemerson.brl, 433.39, 1e-6),
+    `Jhemerson paidTotals.brl = ${paidTotals.Jhemerson.brl.toFixed(2)} (expected 433.39)`);
+  assert(approxEq(paidTotals.Claudio.brl, 0),
+    `Claudio paidTotals.brl = ${paidTotals.Claudio.brl} (expected 0, not a payer)`);
+}
+
+// 21. Ainda a pagar = 0 for fully paid expense (ratio = 1)
+console.log('\nTest 21: Ainda a pagar = 0 for fully paid expense (ratio = 1)');
+{
+  const expenses = [
+    {
+      id: 'E5', category: 'flight', amount_chf: null, amount_brl: 1300.17,
+      status: '✅ Payé',
+      payments: [
+        { by: 'Claudeane', amount_brl: 433.39 },
+        { by: 'Lucileide', amount_brl: 433.39 },
+        { by: 'Jhemerson', amount_brl: 433.39 },
+      ],
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'],
+    },
+  ];
+  const totals     = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const remaining = (totals.Lucileide.brl - paidTotals.Lucileide.brl)
+                  + (totals.Lucileide.chf - paidTotals.Lucileide.chf) * 6.5;
+  assert(approxEq(remaining, 0, 0.01),
+    `Lucileide Ainda a pagar = ${remaining.toFixed(4)} (expected ≈0 for fully paid flight)`);
+}
+
+// 22. Ainda a pagar correct for partial payment (paid_ratio = 0.5) with 4 pax
+console.log('\nTest 22: Ainda a pagar correct for partial payment (ratio = 0.5, 4 pax)');
+{
+  const expenses = [
+    {
+      id: 'E9', category: 'lodging', amount_chf: null, amount_brl: 840,
+      status: '⚠️ À PAYÉ 50%',
+      paid_ratio: 0.5,
+      paid_amount: 420,
+      beneficiaries: ['Claudio', 'Claudeane', 'Lucileide', 'Jhemerson'],
+    },
+  ];
+  // All 4 pax + non-flight → weighted split: total weight = 4.0, Lucileide = 1.0
+  // Lucileide share = 840 × 1/4 = 210; paid 50% = 105; remaining = 105
+  const totals     = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const lucShare    = totals.Lucileide.brl;
+  const lucPaid     = paidTotals.Lucileide.brl;
+  const lucRemaining = lucShare - lucPaid;
+  assert(approxEq(lucShare, 840 * 1.0 / 4.0, 1e-6),
+    `Lucileide share = ${lucShare.toFixed(2)} (expected 210.00)`);
+  assert(approxEq(lucPaid, 840 * 1.0 / 4.0 * 0.5, 1e-6),
+    `Lucileide paid = ${lucPaid.toFixed(2)} (expected 105.00)`);
+  assert(approxEq(lucRemaining, 105, 1e-6),
+    `Lucileide Ainda a pagar = ${lucRemaining.toFixed(2)} (expected 105.00)`);
+}
 
 console.log(`\n${passed + failed} test(s): ${passed} passed, ${failed} failed.\n`);
 if (failed > 0) process.exit(1);
