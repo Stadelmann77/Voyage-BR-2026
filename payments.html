@@ -157,6 +157,19 @@
       return shares;
     }
 
+    // Returns the fraction [0,1] of an expense that has already been paid.
+    // Priority: ✅ status → 1; paid_ratio wins over paid_amount; else derive
+    // from paid_amount/amount; else 0.
+    function getEffectivePaidRatio(exp) {
+      if ((exp.status || '').startsWith('✅')) return 1;
+      if (exp.paid_ratio != null) return Math.min(1, Math.max(0, Number(exp.paid_ratio)));
+      if (exp.paid_amount != null) {
+        const amount = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
+        if (amount > 0) return Math.min(1, Math.max(0, Number(exp.paid_amount) / amount));
+      }
+      return 0;
+    }
+
     // ── Main load ───────────────────────────────────────────────
     async function loadPayments() {
       const container = document.getElementById('payments-container');
@@ -199,15 +212,18 @@
           return { exp, shares };
         });
 
-        // Accumulate per-person paid totals (share of expenses already marked as paid ✅)
+        // Accumulate per-person paid totals — scale each share by the effective
+        // paid ratio: 1 for fully paid (✅), paid_ratio if set, derived from
+        // paid_amount if available, otherwise 0.
         const paidTotals = {};
         people.forEach(p => { paidTotals[p.name] = { chf: 0, brl: 0 }; });
         expenseRows.forEach(({ exp, shares }) => {
-          if ((exp.status || '').startsWith('✅')) {
+          const ratio = getEffectivePaidRatio(exp);
+          if (ratio > 0) {
             Object.entries(shares).forEach(([name, s]) => {
               if (paidTotals[name]) {
-                paidTotals[name].chf += s.chf;
-                paidTotals[name].brl += s.brl;
+                paidTotals[name].chf += s.chf * ratio;
+                paidTotals[name].brl += s.brl * ratio;
               }
             });
           }
@@ -322,7 +338,15 @@
                 return `<span class="chip person" title="${escHtml(title)}">${escHtml(b)}</span>`;
               }).join('')}
             </div></td>
-            <td>${statusBadge(exp.status || '—')}</td>
+            <td>${(() => {
+              const ratio = getEffectivePaidRatio(exp);
+              const badge = statusBadge(exp.status || '—');
+              if (ratio > 0 && ratio < 1) {
+                const pct = Math.round(ratio * 100);
+                return badge + ` <span class="status status-warn" style="font-size:.75em">${pct}%\u00a0payé</span>`;
+              }
+              return badge;
+            })()}</td>
           </tr>`;
         });
 

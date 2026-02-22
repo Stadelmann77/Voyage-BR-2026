@@ -127,6 +127,8 @@
       "Claudio"
     ],
     "status": "⚠️ À PAYÉ 50% le 05.01.2026",
+    "paid_ratio": 0.5,
+    "paid_amount": 420,
     "notes": "Réf 5331265550"
   },
   {

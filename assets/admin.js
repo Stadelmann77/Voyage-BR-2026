@@ -2,7 +2,7 @@
 // Admin page: GitHub OAuth via Cloudflare Worker + Git-based data editing.
 // Read-only mode works without a Worker; editing requires authentication.
 
-import { escHtml, fmtDate } from './public.js';
+import { escHtml, fmtDate, parseBrl } from './public.js';
 import { t } from './i18n.js';
 
 const WORKER_STORAGE_KEY = 'admin_worker_url';
@@ -368,7 +368,7 @@ async function loadPaymentsAdmin(body) {
       <thead><tr>
         <th>ID</th><th>Libellé</th><th>CHF</th><th>BRL</th><th>Payé par</th>
         ${peopleNames.map(n => `<th>${escHtml(n)}</th>`).join('')}
-        <th>Statut</th>
+        <th>Statut</th><th>Payé %</th><th>Montant payé</th>
       </tr></thead>
       <tbody>
         ${expenses.map(exp => `<tr>
@@ -389,10 +389,50 @@ async function loadPaymentsAdmin(body) {
             <input type="text" data-exp="${escHtml(exp.id)}" data-field="status"
               value="${escHtml(exp.status || '')}" style="width:180px;font-size:.8rem">
           </td>
+          <td>
+            <input type="number" min="0" max="100" step="1"
+              data-exp="${escHtml(exp.id)}" data-field="paid_pct"
+              value="${exp.paid_ratio != null ? Math.round(Number(exp.paid_ratio) * 100) : ''}"
+              style="width:60px;font-size:.85rem" placeholder="0–100">
+          </td>
+          <td>
+            <input type="text"
+              data-exp="${escHtml(exp.id)}" data-field="paid_amount"
+              value="${exp.paid_amount != null ? exp.paid_amount : ''}"
+              style="width:80px;font-size:.85rem" placeholder="montant">
+          </td>
         </tr>`).join('')}
       </tbody>
     </table></div>
     <div id="expenses-save-msg" style="margin-top:.75rem"></div>`;
+
+  // Helper: round a currency amount to 2 decimal places
+  function roundCurrency(v) { return Math.round(v * 100) / 100; }
+
+  // Auto-update: Paid % ↔ Paid amount
+  body.addEventListener('input', e => {
+    const inp = e.target;
+    if (!inp.dataset.exp) return;
+    const exp = expenses.find(ex => ex.id === inp.dataset.exp);
+    if (!exp) return;
+    const amount = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
+
+    if (inp.dataset.field === 'paid_pct') {
+      const pct = parseFloat(inp.value);
+      if (!isNaN(pct) && amount > 0) {
+        const ratio = Math.min(1, Math.max(0, pct / 100));
+        const amtInp = body.querySelector(`input[data-exp="${exp.id}"][data-field="paid_amount"]`);
+        if (amtInp) amtInp.value = roundCurrency(amount * ratio);
+      }
+    } else if (inp.dataset.field === 'paid_amount') {
+      const paidAmt = parseFloat(inp.value);
+      if (!isNaN(paidAmt) && amount > 0) {
+        const ratio = Math.min(1, Math.max(0, paidAmt / amount));
+        const pctInp = body.querySelector(`input[data-exp="${exp.id}"][data-field="paid_pct"]`);
+        if (pctInp) pctInp.value = Math.round(ratio * 100);
+      }
+    }
+  });
 
   document.getElementById('save-expenses-btn').addEventListener('click', async () => {
     const msgEl = document.getElementById('expenses-save-msg');
@@ -412,6 +452,25 @@ async function loadPaymentsAdmin(body) {
       document.querySelectorAll('input[data-field="status"]').forEach(inp => {
         const idx = expenses.findIndex(e => e.id === inp.dataset.exp);
         if (idx >= 0) expenses[idx].status = inp.value.trim();
+      });
+      // Collect paid_ratio (canonical) and derive paid_amount from it
+      document.querySelectorAll('input[data-field="paid_pct"]').forEach(inp => {
+        const idx = expenses.findIndex(e => e.id === inp.dataset.exp);
+        if (idx < 0) return;
+        const pct = parseFloat(inp.value);
+        if (!isNaN(pct) && inp.value.trim() !== '') {
+          const ratio = Math.min(1, Math.max(0, pct / 100));
+          expenses[idx].paid_ratio = ratio;
+          const amount = parseBrl(expenses[idx].amount_brl) || expenses[idx].amount_chf || 0;
+          if (amount > 0) {
+            expenses[idx].paid_amount = roundCurrency(amount * ratio);
+          } else {
+            delete expenses[idx].paid_amount;
+          }
+        } else {
+          delete expenses[idx].paid_ratio;
+          delete expenses[idx].paid_amount;
+        }
       });
 
       const result = await commitFile('data/expenses.json', expenses, 'admin: update expense beneficiaries');
