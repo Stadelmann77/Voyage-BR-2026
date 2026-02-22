@@ -7,7 +7,9 @@
     "amount_chf": 290.15,
     "amount_brl": null,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudeane"],
+    "beneficiaries": [
+      "Claudeane"
+    ],
     "status": "✅ Payé - MC ****4753",
     "notes": "Réf YS3VET"
   },
@@ -19,7 +21,9 @@
     "amount_chf": 311.8,
     "amount_brl": null,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudeane"],
+    "beneficiaries": [
+      "Claudeane"
+    ],
     "status": "⚠️ En Espera (Trip.com)",
     "notes": "Réf TNG1NT / AKE4YZ"
   },
@@ -31,7 +35,9 @@
     "amount_chf": 845.81,
     "amount_brl": null,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudio"],
+    "beneficiaries": [
+      "Claudio"
+    ],
     "status": "✅ Payé - Booking.com (A/R)",
     "notes": "Réf XR2CPW — retour inclus"
   },
@@ -43,7 +49,9 @@
     "amount_chf": 552.15,
     "amount_brl": null,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudeane"],
+    "beneficiaries": [
+      "Claudio"
+    ],
     "status": "✅ Payé - Booking.com",
     "notes": "Réf XR85TH"
   },
@@ -55,8 +63,12 @@
     "amount_chf": null,
     "amount_brl": 1300.17,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudeane", "Lucileide", "Jhemerson"],
-    "status": "⚠️ EN ESPERA - 3 pax",
+    "beneficiaries": [
+      "Claudeane",
+      "Lucileide",
+      "Jhemerson"
+    ],
+    "status": "✅ Payé - 3 pax",
     "notes": "Réf MJ5NQC — 3 pax"
   },
   {
@@ -67,8 +79,12 @@
     "amount_chf": null,
     "amount_brl": 799.14,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudeane", "Lucileide", "Jhemerson"],
-    "status": "⚠️ EN ESPERA - 3 pax",
+    "beneficiaries": [
+      "Claudeane",
+      "Lucileide",
+      "Jhemerson"
+    ],
+    "status": "✅ Payé - 3 pax",
     "notes": "Réf ON3LQT — 3 pax"
   },
   {
@@ -79,7 +95,9 @@
     "amount_chf": 103,
     "amount_brl": 691.65,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudeane"],
+    "beneficiaries": [
+      "Claudeane"
+    ],
     "status": "❌ NON requis",
     "notes": "Réf 5474140188"
   },
@@ -91,7 +109,9 @@
     "amount_chf": 116,
     "amount_brl": 779.62,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudio"],
+    "beneficiaries": [
+      "Claudio"
+    ],
     "status": "✅ OUI - Prépaiement total",
     "notes": "Réf 5987193612"
   },
@@ -103,7 +123,9 @@
     "amount_chf": 125,
     "amount_brl": 840,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudio", "Claudeane", "Lucileide", "Jhemerson"],
+    "beneficiaries": [
+      "Claudio"
+    ],
     "status": "❌ NON PAYÉ — à payer avant 09/04",
     "notes": "Réf 5331265550"
   },
@@ -115,7 +137,9 @@
     "amount_chf": 294,
     "amount_brl": 1968,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudio", "Claudeane", "Lucileide", "Jhemerson"],
+    "beneficiaries": [
+      "Claudeane"
+    ],
     "status": "❌ NON PAYÉ — à payer avant 04/05",
     "notes": "Réf 6862089551"
   },
@@ -127,7 +151,11 @@
     "amount_chf": 129,
     "amount_brl": 861.12,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudio", "Claudeane", "Lucileide", "Jhemerson"],
+    "beneficiaries": [
+      "Claudio",
+      "Claudeane",
+      "Lucileide"
+    ],
     "status": "❌ NON PAYÉ — à payer avant 11/05",
     "notes": "Réf 5620.348.709"
   },
@@ -139,7 +167,9 @@
     "amount_chf": null,
     "amount_brl": 3132.3,
     "paid_by": "Claudio",
-    "beneficiaries": ["Claudio", "Claudeane", "Lucileide", "Jhemerson"],
+    "beneficiaries": [
+      "Claudio"
+    ],
     "status": "⚠️ À PAYER à la prise",
     "notes": "Réf MO49499YVQBC"
   }
