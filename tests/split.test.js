@@ -7,6 +7,7 @@
  *   - When beneficiaries == exactly {Claudio, Claudeane, Lucileide, Jhemerson}:
  *       Claudio=1.25, Claudeane=1.25, Lucileide=1.0, Jhemerson=0.5
  *   - Any other subset: Claudio and Claudeane remain 1.0
+ *   - Jhemerson per-category quota: flight=1.0, all others=0.5 (from people.json)
  */
 
 // ── Replicated logic from payments.html ─────────────────────────────────────
@@ -20,27 +21,48 @@ const PEOPLE_MAP = {
   Jhemerson: { weight: 0.5 },
 };
 
-function getEffectiveWeight(name, isAllFour, peopleMap) {
+// Jhemerson quota override by category (mirrors payments.html)
+const JHEMERSON_CATEGORY_QUOTA = { flight: 1.0 };
+
+// parseBrl replicated here (assets/public.js is a browser ES module; Node.js
+// tests cannot import it directly without a bundler).
+function parseBrl(val) {
+  if (val == null) return null;
+  if (typeof val === 'number') return val;
+  const s = String(val).trim();
+  if (s.includes(',')) {
+    return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+  }
+  return parseFloat(s);
+}
+
+function getEffectiveWeight(name, isAllFour, peopleMap, category) {
+  if (name === 'Jhemerson') {
+    const override = JHEMERSON_CATEGORY_QUOTA[category];
+    if (override !== undefined) return override;
+  }
   if (isAllFour && (name === 'Claudio' || name === 'Claudeane')) return 1.25;
   return peopleMap[name]?.weight ?? 1.0;
 }
 
 function computeSplit(expense, peopleMap) {
   const beneficiaries = expense.beneficiaries || [];
+  const category = expense.category || '';
   const bSet = new Set(beneficiaries);
   const isAllFour =
     bSet.size === ALL_FOUR_NAMES.length && ALL_FOUR_NAMES.every(n => bSet.has(n));
 
   const totalWeight = beneficiaries.reduce(
-    (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap), 0);
+    (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap, category), 0);
   if (totalWeight === 0) return {};
 
+  const amtBrl = parseBrl(expense.amount_brl);
   const shares = {};
   beneficiaries.forEach(name => {
-    const w = getEffectiveWeight(name, isAllFour, peopleMap);
+    const w = getEffectiveWeight(name, isAllFour, peopleMap, category);
     shares[name] = {
       chf: expense.amount_chf ? expense.amount_chf * w / totalWeight : 0,
-      brl: expense.amount_brl ? expense.amount_brl * w / totalWeight : 0,
+      brl: amtBrl ? amtBrl * w / totalWeight : 0,
     };
   });
   return shares;
@@ -137,6 +159,22 @@ function computePaidSummary(expenses, people, peopleMap) {
   return paidTotals;
 }
 
+// computeTotalSummary — mirrors COTA TOTAL (all expenses, no status filter)
+function computeTotalSummary(expenses, people, peopleMap) {
+  const totals = {};
+  people.forEach(p => { totals[p.name] = { chf: 0, brl: 0 }; });
+  expenses.forEach(exp => {
+    const shares = computeSplit(exp, peopleMap);
+    Object.entries(shares).forEach(([name, s]) => {
+      if (totals[name]) {
+        totals[name].chf += s.chf;
+        totals[name].brl += s.brl;
+      }
+    });
+  });
+  return totals;
+}
+
 const ALL_PEOPLE = Object.keys(PEOPLE_MAP).map(name => ({ name, ...PEOPLE_MAP[name] }));
 
 // 4. Paid BRL expenses reflected in paidTotals for Lucileide/Jhemerson
@@ -179,6 +217,81 @@ console.log('\nTest 5: unpaid (❌/⚠️) expenses excluded from paidTotals');
   const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
   assert(approxEq(paidTotals.Claudio.chf, 200),
     `Claudio paid CHF = ${paidTotals.Claudio.chf} (expected 200, only ✅ expense counted)`);
+}
+
+// 6. Transport expense included in COTA TOTAL regardless of status
+console.log('\nTest 6: transport expense included in COTA TOTAL regardless of status');
+{
+  const expenses = [
+    { category: 'transport', amount_chf: null, amount_brl: 3132.3,
+      status: '⚠️ À PAYER', beneficiaries: ['Claudio'] },
+  ];
+  const totals = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(totals.Claudio.brl, 3132.3),
+    `Transport (rental car) in COTA TOTAL: Claudio = ${totals.Claudio.brl.toFixed(2)} BRL (expected 3132.30)`);
+  // Ensure it is NOT in paidTotals (⚠️ status)
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(paidTotals.Claudio.brl, 0),
+    `Unpaid transport not in JÁ PAGO: Claudio paid = ${paidTotals.Claudio.brl} (expected 0)`);
+}
+
+// 7. BRL string parsing handles pt-BR format ("3.182,3")
+console.log('\nTest 7: parseBrl handles pt-BR number format');
+{
+  assert(approxEq(parseBrl('3.182,3'), 3182.3),
+    `parseBrl('3.182,3') = ${parseBrl('3.182,3')} (expected 3182.3)`);
+  assert(approxEq(parseBrl('3.132,30'), 3132.30),
+    `parseBrl('3.132,30') = ${parseBrl('3.132,30')} (expected 3132.30)`);
+  assert(approxEq(parseBrl(3132.3), 3132.3),
+    `parseBrl(3132.3 number) = ${parseBrl(3132.3)} (expected 3132.3)`);
+  assert(parseBrl(null) === null,
+    'parseBrl(null) = null');
+
+  // Verify BRL string used in computeSplit
+  const expense = {
+    category: 'transport',
+    amount_brl: '3.132,30',
+    beneficiaries: ['Claudio'],
+  };
+  const shares = computeSplit(expense, PEOPLE_MAP);
+  assert(approxEq(shares.Claudio.brl, 3132.30),
+    `computeSplit with BRL string '3.132,30': Claudio = ${shares.Claudio.brl.toFixed(2)} (expected 3132.30)`);
+}
+
+// 8. Jhemerson quota = 1.0 for flight category
+console.log('\nTest 8: Jhemerson quota = 1.0 for flights (equal share)');
+{
+  const expense = {
+    category: 'flight',
+    amount_brl: 1300.17,
+    beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'],
+  };
+  // Flight quota: Claudeane=1.0, Lucileide=1.0, Jhemerson=1.0 → totalWeight=3.0
+  const shares = computeSplit(expense, PEOPLE_MAP);
+  const expected = 1300.17 / 3.0;
+  assert(approxEq(shares.Jhemerson.brl, expected, 1e-6),
+    `Jhemerson flight share = ${shares.Jhemerson.brl.toFixed(4)} (expected ${expected.toFixed(4)} with quota 1.0)`);
+  assert(approxEq(shares.Claudeane.brl, expected, 1e-6),
+    `Claudeane flight share = ${shares.Claudeane.brl.toFixed(4)} (expected ${expected.toFixed(4)})`);
+  // Confirm it's NOT the old 0.5-weight value
+  const oldValue = 1300.17 * 0.5 / 2.5;
+  assert(!approxEq(shares.Jhemerson.brl, oldValue, 1e-6),
+    `Jhemerson NOT using old 0.5 weight for flight (old value was ${oldValue.toFixed(4)})`);
+}
+
+// 9. Jhemerson quota = 0.5 for lodging (default, unchanged)
+console.log('\nTest 9: Jhemerson quota = 0.5 for lodging (default unchanged)');
+{
+  const expense = {
+    category: 'lodging',
+    amount_chf: 200,
+    beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'],
+  };
+  // Lodging: Claudeane=1.0, Lucileide=1.0, Jhemerson=0.5 → totalWeight=2.5
+  const shares = computeSplit(expense, PEOPLE_MAP);
+  const expectedJhemerson = 200 * 0.5 / 2.5; // = 40
+  assert(approxEq(shares.Jhemerson.chf, expectedJhemerson, 1e-6),
+    `Jhemerson lodging share = ${shares.Jhemerson.chf.toFixed(4)} (expected ${expectedJhemerson.toFixed(4)} with quota 0.5)`);
 }
 
 // ── Summary ──────────────────────────────────────────────────────────────────

@@ -85,7 +85,7 @@
   </footer>
 
   <script type="module">
-    import { fetchExpenses, fetchPeople, showLoading, escHtml, statusBadge } from './assets/public.js';
+    import { fetchExpenses, fetchPeople, showLoading, escHtml, statusBadge, parseBrl } from './assets/public.js';
     import { t } from './assets/i18n.js';
 
     // ── Exchange rate fetch ─────────────────────────────────────
@@ -118,13 +118,23 @@
     // ── Weighted split ──────────────────────────────────────────
     const ALL_FOUR_NAMES = ['Claudio', 'Claudeane', 'Lucileide', 'Jhemerson'];
 
-    function getEffectiveWeight(name, isAllFour, peopleMap) {
+    // Jhemerson quota override by category:
+    //   flight → 1.0 (pays equal share), all other categories fall back to
+    //   the weight in people.json (currently 0.5 for Jhemerson)
+    const JHEMERSON_CATEGORY_QUOTA = { flight: 1.0 };
+
+    function getEffectiveWeight(name, isAllFour, peopleMap, category) {
+      if (name === 'Jhemerson') {
+        const override = JHEMERSON_CATEGORY_QUOTA[category];
+        if (override !== undefined) return override;
+      }
       if (isAllFour && (name === 'Claudio' || name === 'Claudeane')) return 1.25;
       return peopleMap[name]?.weight ?? 1.0;
     }
 
     function computeSplit(expense, peopleMap) {
       const beneficiaries = expense.beneficiaries || [];
+      const category = expense.category || '';
 
       // Special case: exactly all 4 travellers → adjust Claudio & Claudeane to 1.25
       const bSet = new Set(beneficiaries);
@@ -132,15 +142,16 @@
         ALL_FOUR_NAMES.every(n => bSet.has(n));
 
       const totalWeight = beneficiaries.reduce(
-        (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap), 0);
+        (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap, category), 0);
       if (totalWeight === 0) return {};
 
+      const amtBrl = parseBrl(expense.amount_brl);
       const shares = {};
       beneficiaries.forEach(name => {
-        const w = getEffectiveWeight(name, isAllFour, peopleMap);
+        const w = getEffectiveWeight(name, isAllFour, peopleMap, category);
         shares[name] = {
           chf: expense.amount_chf ? (expense.amount_chf * w / totalWeight) : 0,
-          brl: expense.amount_brl ? (expense.amount_brl * w / totalWeight) : 0,
+          brl: amtBrl ? (amtBrl * w / totalWeight) : 0,
         };
       });
       return shares;
@@ -205,7 +216,7 @@
         let grandChf = 0, grandBrl = 0;
         expenses.forEach(e => {
           grandChf += e.amount_chf || 0;
-          grandBrl += e.amount_brl || 0;
+          grandBrl += parseBrl(e.amount_brl) || 0;
         });
 
         let html = '';
