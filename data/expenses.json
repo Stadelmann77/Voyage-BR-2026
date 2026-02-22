@@ -6,7 +6,7 @@
     "ref": "V1",
     "amount_chf": 290.15,
     "amount_brl": null,
-    "paid_by": "Claudio",
+    "paid_by": "Claudeane",
     "beneficiaries": [
       "Claudeane"
     ],
@@ -20,7 +20,7 @@
     "ref": "V2",
     "amount_chf": 311.8,
     "amount_brl": null,
-    "paid_by": "Claudio",
+    "paid_by": "Claudeane",
     "beneficiaries": [
       "Claudeane"
     ],
@@ -62,13 +62,13 @@
     "ref": "V6",
     "amount_chf": null,
     "amount_brl": 1300.17,
-    "paid_by": "Claudio",
+    "paid_by": "Claudeane",
     "beneficiaries": [
       "Claudeane",
       "Lucileide",
       "Jhemerson"
     ],
-    "status": "✅ Payé - 3 pax",
+    "status": "✅ Payé",
     "notes": "Réf MJ5NQC — 3 pax"
   },
   {
@@ -78,13 +78,13 @@
     "ref": "V7",
     "amount_chf": null,
     "amount_brl": 799.14,
-    "paid_by": "Claudio",
+    "paid_by": "Claudeane",
     "beneficiaries": [
       "Claudeane",
       "Lucileide",
       "Jhemerson"
     ],
-    "status": "✅ Payé - 3 pax",
+    "status": "✅ Payé",
     "notes": "Réf ON3LQT — 3 pax"
   },
   {
@@ -94,7 +94,7 @@
     "ref": "H1",
     "amount_chf": 103,
     "amount_brl": 691.65,
-    "paid_by": "Claudio",
+    "paid_by": "Claudeane",
     "beneficiaries": [
       "Claudeane"
     ],
@@ -136,7 +136,7 @@
     "ref": "H4",
     "amount_chf": 294,
     "amount_brl": 1968,
-    "paid_by": "Claudio",
+    "paid_by": "Claudeane",
     "beneficiaries": [
       "Claudeane"
     ],
