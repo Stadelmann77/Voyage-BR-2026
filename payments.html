@@ -111,30 +111,28 @@
     }
 
     // ── Weighted split ──────────────────────────────────────────
-    // Option B: when ALL 4 travellers are beneficiaries, Claudio and Claudeane
-    // each get weight 1.25; otherwise everyone uses their default weight.
-    const OPTION_B_WEIGHTS = { Claudio: 1.25, Claudeane: 1.25, Lucileide: 1.0, Jhemerson: 0.5 };
-    const OPTION_B_SET = new Set(Object.keys(OPTION_B_WEIGHTS));
+    const ALL_FOUR_NAMES = ['Claudio', 'Claudeane', 'Lucileide', 'Jhemerson'];
 
-    function effectiveWeight(name, isOptionB, peopleMap) {
-      if (isOptionB && Object.prototype.hasOwnProperty.call(OPTION_B_WEIGHTS, name)) {
-        return OPTION_B_WEIGHTS[name];
-      }
+    function getEffectiveWeight(name, isAllFour, peopleMap) {
+      if (isAllFour && (name === 'Claudio' || name === 'Claudeane')) return 1.25;
       return peopleMap[name]?.weight ?? 1.0;
     }
 
     function computeSplit(expense, peopleMap) {
       const beneficiaries = expense.beneficiaries || [];
-      const isOptionB = beneficiaries.length === OPTION_B_SET.size &&
-        beneficiaries.every(name => OPTION_B_SET.has(name));
+
+      // Special case: exactly all 4 travellers → adjust Claudio & Claudeane to 1.25
+      const bSet = new Set(beneficiaries);
+      const isAllFour = bSet.size === ALL_FOUR_NAMES.length &&
+        ALL_FOUR_NAMES.every(n => bSet.has(n));
 
       const totalWeight = beneficiaries.reduce(
-        (s, name) => s + effectiveWeight(name, isOptionB, peopleMap), 0);
+        (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap), 0);
       if (totalWeight === 0) return {};
 
       const shares = {};
       beneficiaries.forEach(name => {
-        const w = effectiveWeight(name, isOptionB, peopleMap);
+        const w = getEffectiveWeight(name, isAllFour, peopleMap);
         shares[name] = {
           chf: expense.amount_chf ? (expense.amount_chf * w / totalWeight) : 0,
           brl: expense.amount_brl ? (expense.amount_brl * w / totalWeight) : 0,
