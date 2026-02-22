@@ -1,0 +1,6 @@
+[
+  { "id": "P1", "name": "Claudio",   "weight": 1.0, "role": "Voyageur principal" },
+  { "id": "P2", "name": "Claudeane", "weight": 1.0, "role": "Épouse (brésilienne)" },
+  { "id": "P3", "name": "Lucileide", "weight": 1.0, "role": "Sœur de Claudeane" },
+  { "id": "P4", "name": "Jhemerson", "weight": 0.5, "role": "Neveu" }
+]

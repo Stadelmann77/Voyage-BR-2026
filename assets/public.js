@@ -79,6 +79,14 @@ export async function fetchPayments() {
   return [];
 }
 
+export async function fetchExpenses() {
+  return loadJson('expenses');
+}
+
+export async function fetchPeople() {
+  return loadJson('people');
+}
+
 export async function fetchChecklist(surpriseUnlocked = false) {
   const items = await loadJson('checklist');
   return surpriseUnlocked ? items : items.filter(i => !i.is_surprise);

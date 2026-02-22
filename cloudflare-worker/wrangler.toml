@@ -1,0 +1,14 @@
+name = "voyage-br-2026-admin"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+REPO_OWNER           = "Stadelmann77"
+REPO_NAME            = "Voyage-BR-2026"
+ALLOWED_GITHUB_LOGIN = "Stadelmann77"
+SITE_URL             = "https://stadelmann77.github.io/Voyage-BR-2026"
+
+# ── Secrets (never store values here — use `wrangler secret put`) ────────────
+# wrangler secret put GITHUB_CLIENT_ID
+# wrangler secret put GITHUB_CLIENT_SECRET
+# wrangler secret put JWT_SECRET
