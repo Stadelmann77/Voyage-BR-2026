@@ -247,10 +247,23 @@
         // Format helpers
         const fmtChf = v => (isFinite(v) ? v : 0).toLocaleString('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0CHF';
         const fmtBrl = v => 'R$\u00a0' + (isFinite(v) ? v : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        // BRL secondary in parentheses: CHF×convRate + BRL
+        // BRL secondary lines: CHF×convRate (converted) + native BRL received
         const brlSecondary = (chfAmt, brlAmt, convRate) => {
-          const total = chfAmt * convRate + brlAmt;
-          return ` <span class="amount-secondary">(${fmtBrl(total)})</span>`;
+          const converted = chfAmt * convRate;
+          const showConverted = converted > 0.005;
+          const showReceipt  = brlAmt > 0.005;
+          if (!showConverted && !showReceipt) return '';
+          let out = '';
+          if (showConverted) {
+            out += `<span class="amount-secondary" style="display:block">${t('payments.brl.converted')}: ${fmtBrl(converted)}</span>`;
+          }
+          if (showReceipt) {
+            out += `<span class="amount-secondary" style="display:block">${t('payments.brl.receipt')}: ${fmtBrl(brlAmt)}</span>`;
+          }
+          if (showConverted && showReceipt) {
+            out += `<span class="amount-secondary" style="display:block">${t('payments.brl.total')}: ${fmtBrl(converted + brlAmt)}</span>`;
+          }
+          return out;
         };
 
         html += `<h2 style="margin-bottom:.75rem">👥 ${t('payments.perPerson')}</h2>

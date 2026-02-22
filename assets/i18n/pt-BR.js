@@ -181,6 +181,9 @@ const ptBR = {
   'payments.due':              'Cota total',
   'payments.paid':             'Já pago',
   'payments.remaining':        'Ainda a pagar',
+  'payments.brl.converted':   'R$ convertido',
+  'payments.brl.receipt':     'R$ recebido',
+  'payments.brl.total':       'R$ total',
 
   // ── Pages — Contacts ─────────────────────────────────────────
   'page.contacts.title':    '📞 Contatos & Endereços',
