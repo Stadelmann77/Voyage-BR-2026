@@ -1,0 +1,17 @@
+[
+  { "id": "C1",  "organization": "SWISS Service Center",            "phone": "+41 (0) 848 700 700",      "address_web": "swiss.com/webcheckin",                                     "notes": "Réf YS3VET" },
+  { "id": "C2",  "organization": "TAP Portugal",                    "phone": "—",                        "address_web": "flytap.com",                                               "notes": "Réf XR2CPW / XR85TH" },
+  { "id": "C3",  "organization": "Azul Linhas Aéreas",             "phone": "4003-1118 / 0800 887 1118","address_web": "voeazul.com.br",                                           "notes": "Réf MJ5NQC + ON3LQT + TNG1NT" },
+  { "id": "C4",  "organization": "Booking.com (assist. FR)",        "phone": "0445 111 635",             "address_web": "your.booking.com",                                         "notes": "+33 1 57 32 92 09" },
+  { "id": "C5",  "organization": "Free Palace Hotel",               "phone": "+55 11 3271 8596",         "address_web": "RUA TAMANDARE 246, Liberdade, SP",                         "notes": "GPS: S023°33.693 W46°37.977" },
+  { "id": "C6",  "organization": "Maly Boutique Hotel",             "phone": "+55 85 99111 0568",        "address_web": "Av Clóvis Arrais Maia 2790, Fortaleza",                    "notes": "GPS: S003°43.880 W38°27.466" },
+  { "id": "C7",  "organization": "Hotel Encontro do Sol",           "phone": "+55 85 3031 6222",         "address_web": "Rua Monsenhor Bruno 122, Meireles",                        "notes": "GPS: S003°43.418 W38°30.401" },
+  { "id": "C8",  "organization": "ASAS DEL MAR",                    "phone": "+55 85 99856 8461",        "address_web": "DT SITIO ESTEVAO, Canoa Quebrada",                         "notes": "GPS: S004°31.671 W37°41.874" },
+  { "id": "C9",  "organization": "Localiza Rent a Car",             "phone": "App Localiza (FAST)",      "address_web": "Aéroport Fortaleza",                                       "notes": "Réf MO49499YVQBC" },
+  { "id": "C10", "organization": "Police (Polícia Militar)",        "phone": "190",                      "address_web": null,                                                       "notes": null },
+  { "id": "C11", "organization": "SAMU (ambulance)",                "phone": "192",                      "address_web": null,                                                       "notes": null },
+  { "id": "C12", "organization": "Pompiers (Bombeiros)",            "phone": "193",                      "address_web": null,                                                       "notes": null },
+  { "id": "C13", "organization": "Ambassade Suisse",                "phone": "+55 61 3443 5500",         "address_web": "Brasília",                                                 "notes": null },
+  { "id": "C14", "organization": "Claudio (personnel)",             "phone": "41762470577",              "address_web": null,                                                       "notes": null },
+  { "id": "C15", "organization": "Pousada Bangalô (Jericoacoara)",  "phone": "+55 88 99904 5258",        "address_web": "Rua Novo Jeri, S/N, Jericoacoara, CEP 62598-000",          "notes": "GPS: S002°47.867 W40°30.843. Réf 5620.348.709" }
+]

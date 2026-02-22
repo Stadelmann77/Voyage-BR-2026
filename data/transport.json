@@ -1,0 +1,19 @@
+[
+  {
+    "id": "T1",
+    "driver": "Claudio + conducteur additionnel",
+    "vehicle": "SUV AUTOMATIQUE",
+    "agency": "Localiza",
+    "start_date": "2026-05-23",
+    "start_time": "22:00",
+    "end_date": "2026-06-05",
+    "end_time": "18:00",
+    "duration_days": 13,
+    "price_brl": 3132.3,
+    "preauth_brl": 2500,
+    "payment_status": "⚠️ À PAYER à la prise",
+    "booking_ref": "MO49499YVQBC",
+    "agency_address": "AV SENADOR CARLOS JEREISSATI 21, SERRINHA, FORTALEZA, CE",
+    "notes": "Annulation gratuite >48h. 24h/24."
+  }
+]

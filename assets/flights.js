@@ -2,20 +2,14 @@
 // Flight list page + 3D globe modal using globe.gl
 
 import { fetchFlights, escHtml, fmtDate, fmtAmt, statusBadge } from './public.js';
-import { FUNCTIONS_URL } from './supabaseClient.js';
 import { t } from './i18n.js';
 
 let globeInstance = null;
 let surpriseUnlocked = sessionStorage.getItem('surprise_unlocked') === 'true';
-let surpriseData = null;
 
 // ── Initialise ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  if (surpriseUnlocked) {
-    const raw = sessionStorage.getItem('surprise_data');
-    if (raw) { try { surpriseData = JSON.parse(raw); } catch(_) {} }
-    showSurpriseSection();
-  }
+  if (surpriseUnlocked) showSurpriseSection();
 
   await loadFlights();
   setupSurprisePin();
@@ -29,12 +23,8 @@ async function loadFlights() {
   tbody.innerHTML = '<tr><td colspan="11"><div class="loading-center"><div class="spinner"></div></div></td></tr>';
 
   try {
-    const flights = await fetchFlights(false);
-    const allFlights = surpriseUnlocked && surpriseData?.flights
-      ? [...flights, ...surpriseData.flights]
-      : flights;
-
-    renderFlightsTable(allFlights, tbody);
+    const flights = await fetchFlights(surpriseUnlocked);
+    renderFlightsTable(flights, tbody);
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="11"><div class="alert alert-danger">⚠️ ${escHtml(err.message)}</div></td></tr>`;
     if (new URLSearchParams(location.search).get('debug') === '1') {
@@ -254,18 +244,12 @@ function setupSurprisePin() {
     btn.textContent = '…';
 
     try {
-      const res = await fetch(`${FUNCTIONS_URL}/verify-surprise-pin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin }),
-      });
-      const json = await res.json();
+      const params = await fetch('data/parameters.json').then(r => r.json());
+      const expectedPin = params.find(p => p.key === 'surprise_pin')?.value;
 
-      if (json.ok) {
+      if (expectedPin && pin === expectedPin) {
         surpriseUnlocked = true;
-        surpriseData = json.data;
         sessionStorage.setItem('surprise_unlocked', 'true');
-        sessionStorage.setItem('surprise_data', JSON.stringify(json.data));
         overlay.classList.add('hidden');
         showSurpriseSection();
         await loadFlights(); // reload to include surprise flights
