@@ -181,6 +181,9 @@ const fr = {
   'payments.due':              'Part totale',
   'payments.paid':             'Déjà payé',
   'payments.remaining':        'Reste à payer',
+  'payments.brl.converted':   'R$ converti',
+  'payments.brl.receipt':     'R$ reçu',
+  'payments.brl.total':       'R$ total',
 
   // ── Pages — Contacts ─────────────────────────────────────────
   'page.contacts.title':    '📞 Contacts & Adresses',

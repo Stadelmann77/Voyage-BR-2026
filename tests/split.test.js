@@ -398,6 +398,90 @@ console.log('\nTest 14: partial payment split across multiple beneficiaries');
     `Jhemerson JÁ PAGO BRL = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected 100)`);
 }
 
+// ── brlSecondary display logic ────────────────────────────────────────────────
+// The helper in payments.html computes two separate lines:
+//   converted = chfAmt × convRate   (CHF portion converted to BRL at applicable rate)
+//   receipt   = brlAmt              (native BRL portion, no conversion)
+//   total     = converted + receipt (shown only when both are non-zero)
+//
+// For 'paid' rows the fallbackRate is used; for 'due'/'remaining' the live rate.
+
+function brlSecondaryData(chfAmt, brlAmt, convRate) {
+  const converted = chfAmt * convRate;
+  const showConverted = converted > 0.005;
+  const showReceipt   = brlAmt > 0.005;
+  return {
+    converted: showConverted ? converted : null,
+    receipt:   showReceipt   ? brlAmt    : null,
+    total:     (showConverted && showReceipt) ? converted + brlAmt : null,
+  };
+}
+
+// 15. CHF-only expense: converted line = chf × rate; no receipt line
+console.log('\nTest 15: CHF-only → converted line only, no receipt');
+{
+  const chf = 125;
+  const rate = 6.5;
+  const d = brlSecondaryData(chf, 0, rate);
+  assert(approxEq(d.converted, chf * rate, 1e-6),
+    `converted = ${d.converted?.toFixed(4)} (expected ${(chf * rate).toFixed(4)})`);
+  assert(d.receipt === null,
+    `receipt is null when brlAmt = 0 (got ${d.receipt})`);
+  assert(d.total === null,
+    `total is null when only one side is non-zero (got ${d.total})`);
+}
+
+// 16. BRL-only expense: receipt line = brlAmt; no converted line
+console.log('\nTest 16: BRL-only → receipt line only, no converted');
+{
+  const brl = 500;
+  const d = brlSecondaryData(0, brl, 6.5);
+  assert(d.converted === null,
+    `converted is null when chfAmt = 0 (got ${d.converted})`);
+  assert(approxEq(d.receipt, brl, 1e-6),
+    `receipt = ${d.receipt?.toFixed(4)} (expected ${brl})`);
+  assert(d.total === null,
+    `total is null when only one side is non-zero (got ${d.total})`);
+}
+
+// 17. Mixed CHF + BRL: both lines shown + total = sum
+console.log('\nTest 17: mixed CHF+BRL → both lines + total');
+{
+  const chf = 100, brl = 200, rate = 6.7;
+  const d = brlSecondaryData(chf, brl, rate);
+  const expectedConverted = chf * rate; // 670
+  const expectedTotal     = expectedConverted + brl; // 870
+  assert(approxEq(d.converted, expectedConverted, 1e-6),
+    `converted = ${d.converted?.toFixed(4)} (expected ${expectedConverted.toFixed(4)})`);
+  assert(approxEq(d.receipt, brl, 1e-6),
+    `receipt = ${d.receipt?.toFixed(4)} (expected ${brl})`);
+  assert(approxEq(d.total, expectedTotal, 1e-6),
+    `total = ${d.total?.toFixed(4)} (expected ${expectedTotal.toFixed(4)})`);
+  // Confirm no double-counting: total != 2 × converted, total != 2 × receipt
+  assert(!approxEq(d.total, 2 * d.converted, 1e-6),
+    'total is not double the converted portion');
+  assert(!approxEq(d.total, 2 * d.receipt, 1e-6),
+    'total is not double the receipt portion');
+}
+
+// 18. Paid line uses fallbackRate, due/remaining use live rate
+console.log('\nTest 18: paid uses fallbackRate; due/remaining use live rate');
+{
+  const chf = 100, brl = 50;
+  const liveRate = 6.8, fallbackRate = 6.5;
+  const dDue  = brlSecondaryData(chf, brl, liveRate);
+  const dPaid = brlSecondaryData(chf, brl, fallbackRate);
+  assert(approxEq(dDue.converted,  chf * liveRate,     1e-6),
+    `due converted uses live rate: ${dDue.converted?.toFixed(4)} (expected ${(chf * liveRate).toFixed(4)})`);
+  assert(approxEq(dPaid.converted, chf * fallbackRate, 1e-6),
+    `paid converted uses fallbackRate: ${dPaid.converted?.toFixed(4)} (expected ${(chf * fallbackRate).toFixed(4)})`);
+  assert(!approxEq(dDue.converted, dPaid.converted, 1e-6),
+    'live rate and fallback rate produce different converted values');
+  // receipt (BRL native) is rate-independent
+  assert(approxEq(dDue.receipt, dPaid.receipt, 1e-6),
+    `receipt is rate-independent: due=${dDue.receipt?.toFixed(4)} paid=${dPaid.receipt?.toFixed(4)}`);
+}
+
 // ── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${passed + failed} test(s): ${passed} passed, ${failed} failed.\n`);
 if (failed > 0) process.exit(1);
