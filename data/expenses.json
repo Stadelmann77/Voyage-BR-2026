@@ -92,7 +92,7 @@
     "label": "Hébergement Free Palace Hotel, SP (Claudeane) — 3 nuits",
     "category": "lodging",
     "ref": "H1",
-    "amount_chf": 103,
+    "amount_chf": null,
     "amount_brl": 691.65,
     "paid_by": "Claudeane",
     "beneficiaries": [
@@ -106,7 +106,7 @@
     "label": "Hébergement Maly Boutique Hotel, Fortaleza (Claudio) — 2 nuits",
     "category": "lodging",
     "ref": "H2",
-    "amount_chf": 116,
+    "amount_chf": null,
     "amount_brl": 779.62,
     "paid_by": "Claudio",
     "beneficiaries": [
@@ -120,7 +120,7 @@
     "label": "Hébergement Hotel Encontro do Sol, Fortaleza — 2 nuits (4 pax)",
     "category": "lodging",
     "ref": "H3",
-    "amount_chf": 125,
+    "amount_chf": null,
     "amount_brl": 840,
     "paid_by": "Claudio",
     "beneficiaries": [
@@ -136,7 +136,7 @@
     "label": "Hébergement ASAS DEL MAR, Canoa Quebrada — 3 nuits (4 pax)",
     "category": "lodging",
     "ref": "H4",
-    "amount_chf": 294,
+    "amount_chf": null,
     "amount_brl": 1968,
     "paid_by": "Claudeane",
     "beneficiaries": [
@@ -150,7 +150,7 @@
     "label": "Hébergement Pousada Bangalô, Jericoacoara — 2 nuits (4 pax)",
     "category": "lodging",
     "ref": "H5",
-    "amount_chf": 129,
+    "amount_chf": null,
     "amount_brl": 861.12,
     "paid_by": "Claudio",
     "beneficiaries": [
