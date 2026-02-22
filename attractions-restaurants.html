@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attraits &amp; Restaurants — Voyage Brésil 2026</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+  <script type="module" src="assets/i18n.js"></script>
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="index.html"><span>🇧🇷</span> Voyage Brésil 2026</a>
+    <div class="nav-links">
+      <a href="index.html" data-i18n="nav.home">🏠 Accueil</a>
+      <a href="flights.html" data-i18n="nav.flights">✈️ Vols</a>
+      <a href="lodgings.html" data-i18n="nav.lodgings">🏨 Hébergements</a>
+      <a href="transport.html" data-i18n="nav.transport">🚗 Transport</a>
+      <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
+      <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
+      <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
+      <a href="attractions-restaurants.html" data-i18n="nav.attractions">🗺️ Attraits &amp; Restos</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="lang-toggle">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="pt-BR" aria-pressed="false">PT</button>
+    </div>
+    <a class="nav-admin-link" href="admin.html" data-i18n="nav.admin">⚙️ Admin</a>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1 data-i18n="page.attractions.title">🗺️ Attraits &amp; Restaurants</h1>
+      <p data-i18n="page.attractions.subtitle">Lieux à visiter et restaurants recommandés au Brésil.</p>
+    </div>
+
+    <div id="attractions-section">
+      <div class="loading-center"><div class="spinner"></div></div>
+    </div>
+    <div id="restaurants-section" style="margin-top:1rem"></div>
+  </main>
+
+  <footer>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> JSON</p>
+  </footer>
+
+  <script type="module">
+    import { fetchContent, escHtml } from './assets/public.js';
+    import { lang } from './assets/i18n.js';
+    import { t } from './assets/i18n.js';
+
+    function renderContentSection(container, items, sectionKey) {
+      if (!items || items.length === 0) {
+        container.innerHTML = `<div class="card"><h2>${escHtml(t(sectionKey))}</h2><p style="color:var(--text-light)">${escHtml(t('content.noItems'))}</p></div>`;
+        return;
+      }
+      let html = `<div class="card"><h2>${escHtml(t(sectionKey))}</h2>`;
+      items.forEach(item => {
+        html += `<div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border,#e5e7eb)">
+          <h3 style="margin:0 0 .35rem">${escHtml(item.title)}</h3>`;
+        if (item.date) html += `<p style="font-size:.8rem;color:var(--text-light)">${escHtml(t('content.date'))}: ${escHtml(item.date)}</p>`;
+        if (item.description) html += `<p style="white-space:pre-line">${escHtml(item.description)}</p>`;
+        if (item.links && item.links.length) {
+          html += `<p style="font-weight:600;margin-bottom:.25rem">${escHtml(t('content.links'))}</p><ul style="margin:0;padding-left:1.2rem">`;
+          item.links.forEach(l => { html += `<li><a href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.label)}</a></li>`; });
+          html += '</ul>';
+        }
+        if (item.attachments && item.attachments.length) {
+          html += `<p style="font-weight:600;margin:.5rem 0 .25rem">${escHtml(t('content.attachments'))}</p><div style="display:flex;flex-wrap:wrap;gap:.5rem">`;
+          item.attachments.forEach(a => {
+            const icon = a.type === 'pdf' ? '📄' : '🖼️';
+            html += `<a href="${escHtml(a.url)}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">${icon} ${escHtml(a.label)}</a>`;
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    async function loadPage() {
+      const currentLang = lang;
+      try {
+        const [attractions, restaurants] = await Promise.all([
+          fetchContent(currentLang, 'attractions'),
+          fetchContent(currentLang, 'restaurants'),
+        ]);
+        renderContentSection(document.getElementById('attractions-section'), attractions, 'section.attractions');
+        renderContentSection(document.getElementById('restaurants-section'), restaurants, 'section.restaurants');
+      } catch (err) {
+        document.getElementById('attractions-section').innerHTML =
+          `<div class="alert alert-danger">⚠️ ${escHtml(err.message)}</div>`;
+      }
+    }
+
+    loadPage();
+    document.addEventListener('langchange', loadPage);
+  </script>
+</body>
+</html>

@@ -243,6 +243,43 @@ const fr = {
   'admin.tab.transport':  '🚗 Transport',
   'admin.tab.payments':   '💰 Paiements',
   'admin.tab.checklist':  '✅ Checklist',
+  'admin.tab.content':    '📝 Contenus',
+
+  // ── Content management (admin) ───────────────────────────────
+  'admin.content.lang':       'Langue',
+  'admin.content.section':    'Section',
+  'admin.content.newItem':    '+ Nouvel élément',
+  'admin.content.saveItem':   '💾 Enregistrer',
+  'admin.content.deleteItem': '🗑 Supprimer',
+  'admin.content.cancelEdit': 'Annuler',
+  'admin.content.id':         'ID (auto si vide)',
+  'admin.content.title':      'Titre',
+  'admin.content.description':'Description',
+  'admin.content.date':       'Date (optionnel)',
+  'admin.content.links':      'Liens (JSON: [{label,url},…])',
+  'admin.content.attachments':'Pièces jointes (JSON: [{label,url,type},…])',
+  'admin.content.upload':     'Charger un fichier (pdf/jpg/png)',
+  'admin.content.uploadBtn':  '⬆️ Uploader',
+  'admin.content.noItems':    'Aucun élément. Cliquez sur « + Nouvel élément » pour commencer.',
+  'admin.content.saved':      '✅ Enregistré',
+  'admin.content.deleted':    '✅ Supprimé',
+  'admin.content.confirmDelete': 'Supprimer l\'élément « {name} » ?',
+
+  // ── Navigation — new page ────────────────────────────────────
+  'nav.attractions':  '🗺️ Attraits & Restos',
+
+  // ── Pages — Attractions & Restaurants ────────────────────────
+  'page.attractions.title':    '🗺️ Attraits & Restaurants',
+  'page.attractions.subtitle': 'Lieux à visiter et restaurants recommandés au Brésil.',
+  'section.attractions':       '🗺️ Attractions',
+  'section.restaurants':       '🍽️ Restaurants',
+  'section.baggage':           '🧳 Informations bagages',
+  'section.seats':             '💺 Informations sièges',
+  'section.documents':         '📄 Documents & Paiements',
+  'content.noItems':           'Aucun contenu disponible pour le moment.',
+  'content.date':              'Date',
+  'content.links':             'Liens utiles',
+  'content.attachments':       'Documents joints',
 };
 
 export default fr;

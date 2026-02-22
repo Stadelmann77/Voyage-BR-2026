@@ -243,6 +243,43 @@ const ptBR = {
   'admin.tab.transport':  '🚗 Transporte',
   'admin.tab.payments':   '💰 Pagamentos',
   'admin.tab.checklist':  '✅ Checklist',
+  'admin.tab.content':    '📝 Conteúdos',
+
+  // ── Content management (admin) ───────────────────────────────
+  'admin.content.lang':       'Idioma',
+  'admin.content.section':    'Seção',
+  'admin.content.newItem':    '+ Novo item',
+  'admin.content.saveItem':   '💾 Salvar',
+  'admin.content.deleteItem': '🗑 Excluir',
+  'admin.content.cancelEdit': 'Cancelar',
+  'admin.content.id':         'ID (auto se vazio)',
+  'admin.content.title':      'Título',
+  'admin.content.description':'Descrição',
+  'admin.content.date':       'Data (opcional)',
+  'admin.content.links':      'Links (JSON: [{label,url},…])',
+  'admin.content.attachments':'Anexos (JSON: [{label,url,type},…])',
+  'admin.content.upload':     'Carregar arquivo (pdf/jpg/png)',
+  'admin.content.uploadBtn':  '⬆️ Enviar',
+  'admin.content.noItems':    'Nenhum item. Clique em « + Novo item » para começar.',
+  'admin.content.saved':      '✅ Salvo',
+  'admin.content.deleted':    '✅ Excluído',
+  'admin.content.confirmDelete': 'Excluir o item « {name} »?',
+
+  // ── Navigation — new page ────────────────────────────────────
+  'nav.attractions':  '🗺️ Atrações & Restaurantes',
+
+  // ── Pages — Attractions & Restaurants ────────────────────────
+  'page.attractions.title':    '🗺️ Atrações & Restaurantes',
+  'page.attractions.subtitle': 'Lugares para visitar e restaurantes recomendados no Brasil.',
+  'section.attractions':       '🗺️ Atrações',
+  'section.restaurants':       '🍽️ Restaurantes',
+  'section.baggage':           '🧳 Informações de bagagem',
+  'section.seats':             '💺 Informações de assentos',
+  'section.documents':         '📄 Documentos & Pagamentos',
+  'content.noItems':           'Nenhum conteúdo disponível no momento.',
+  'content.date':              'Data',
+  'content.links':             'Links úteis',
+  'content.attachments':       'Documentos anexados',
 };
 
 export default ptBR;

@@ -92,6 +92,51 @@ export async function fetchChecklist(surpriseUnlocked = false) {
   return surpriseUnlocked ? items : items.filter(i => !i.is_surprise);
 }
 
+/**
+ * Fetch bilingual content section.
+ * @param {string} lang    'fr' or 'pt-BR'
+ * @param {string} section 'baggage' | 'seats' | 'attractions' | 'restaurants' | 'documents'
+ * @returns {Promise<Array>}
+ */
+export async function fetchContent(lang, section) {
+  const safeLang    = ['fr', 'pt-BR'].includes(lang) ? lang : 'fr';
+  const validSections = ['baggage', 'seats', 'attractions', 'restaurants', 'documents'];
+  const safeSection = validSections.includes(section) ? section : 'baggage';
+  const key = `${safeLang}/content/${safeSection}`;
+  if (_cache[key]) return _cache[key];
+  const res = await fetch(`data/${key}.json`);
+  if (!res.ok) throw new Error(`Failed to load data/${key}.json: ${res.status}`);
+  const data = await res.json();
+  _cache[key] = data;
+  return data;
+}
+
+/**
+ * Sanitize a filename: keep alphanumerics, dots, hyphens, underscores;
+ * replace everything else with underscores; truncate to 200 chars.
+ * @param {string} name
+ * @returns {string}
+ */
+export function sanitizeFilename(name) {
+  return String(name)
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_{2,}/g, '_')
+    .replace(/^[._-]+/, '')  // strip leading dots, hyphens, underscores
+    .slice(0, 200) || 'file';
+}
+
+/**
+ * Make a filename unique by inserting a timestamp before the extension.
+ * @param {string} name
+ * @returns {string}
+ */
+export function uniqueFilename(name) {
+  const ts  = Date.now();
+  const dot = name.lastIndexOf('.');
+  if (dot > 0) return name.slice(0, dot) + '_' + ts + name.slice(dot);
+  return name + '_' + ts;
+}
+
 // ── Status badge helper ─────────────────────────────────────
 export function statusBadge(text) {
   if (!text) return '';
