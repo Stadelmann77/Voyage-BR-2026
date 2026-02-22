@@ -186,43 +186,63 @@ function buildGlobe(container, origin, dest) {
     : [];
 
   const pointsData = [
-    hasCoords(origin) ? { lat: origin.lat, lng: origin.lon, label: origin.iata, size: 0.35, color: '#60A5FA' } : null,
-    hasCoords(dest)   ? { lat: dest.lat,   lng: dest.lon,   label: dest.iata,   size: 0.35, color: '#34D399' } : null,
+    hasCoords(origin) ? { lat: origin.lat, lng: origin.lon, label: origin.iata, size: 0.3, color: '#60A5FA' } : null,
+    hasCoords(dest)   ? { lat: dest.lat,   lng: dest.lon,   label: dest.iata,   size: 0.3, color: '#34D399' } : null,
   ].filter(Boolean);
 
   const midLat = hasCoords(origin) && hasCoords(dest) ? (origin.lat + dest.lat) / 2 : 20;
   const midLon = hasCoords(origin) && hasCoords(dest) ? (origin.lon + dest.lon) / 2 : 0;
 
+  // Size globe to fit container
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+
   const g = window.Globe({ animateIn: true })(container)
-    .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+    .width(w)
+    .height(h)
+    .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
     .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-    .backgroundColor('#0A0F1E')
+    .backgroundColor('rgba(0,0,0,0)')
     .showAtmosphere(true)
-    .atmosphereColor('#1D4ED8')
-    .atmosphereAltitude(0.18)
+    .atmosphereColor('#3b82f6')
+    .atmosphereAltitude(0.2)
     .arcsData(arcsData)
     .arcColor('color')
-    .arcDashLength(0.4)
-    .arcDashGap(0.2)
-    .arcDashAnimateTime(2000)
-    .arcStroke(2)
-    .arcAltitudeAutoScale(0.35)
+    .arcDashLength(0.5)
+    .arcDashGap(0.15)
+    .arcDashAnimateTime(1800)
+    .arcStroke(2.5)
+    .arcAltitudeAutoScale(0.4)
     .pointsData(pointsData)
     .pointColor('color')
     .pointAltitude('size')
-    .pointRadius(0.5)
+    .pointRadius(0.6)
     .pointLabel('label');
 
   // Point camera at midpoint
-  g.pointOfView({ lat: midLat, lng: midLon, altitude: 2.5 }, 800);
+  g.pointOfView({ lat: midLat, lng: midLon, altitude: 2.2 }, 800);
 
   globeInstance = g;
 }
 
 // ── Surprise PIN ────────────────────────────────────────────
 function setupSurprisePin() {
+  const trigger = document.getElementById('surprise-trigger');
+  const overlay = document.getElementById('surprise-overlay');
+  const closeBtn = document.getElementById('surprise-close');
   const form = document.getElementById('surprise-pin-form');
-  if (!form) return;
+  if (!trigger || !overlay || !form) return;
+
+  // Open dialog from hidden footer trigger
+  trigger.addEventListener('click', () => {
+    if (surpriseUnlocked) return;
+    overlay.classList.remove('hidden');
+    document.getElementById('surprise-pin-input')?.focus();
+  });
+
+  // Close dialog
+  if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -246,6 +266,7 @@ function setupSurprisePin() {
         surpriseData = json.data;
         sessionStorage.setItem('surprise_unlocked', 'true');
         sessionStorage.setItem('surprise_data', JSON.stringify(json.data));
+        overlay.classList.add('hidden');
         showSurpriseSection();
         await loadFlights(); // reload to include surprise flights
       } else {
@@ -264,9 +285,8 @@ function setupSurprisePin() {
 
 function showSurpriseSection() {
   const content = document.getElementById('surprise-content');
-  const banner  = document.getElementById('surprise-banner');
+  const trigger = document.getElementById('surprise-trigger');
   if (content) content.classList.add('visible');
-  if (banner) {
-    banner.innerHTML = `<h2>${t('flights.surprise.unlocked')}</h2><p>${t('flights.surprise.unlocked.desc')}</p>`;
-  }
+  // Hide the trigger once unlocked
+  if (trigger) trigger.style.display = 'none';
 }
