@@ -9,7 +9,7 @@ const _cache = {};
 
 async function loadJson(name) {
   if (_cache[name]) return _cache[name];
-  const res = await fetch(`data/${name}.json`);
+  const res = await fetch(`data/${name}.json`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to load data/${name}.json: ${res.status}`);
   const data = await res.json();
   _cache[name] = data;

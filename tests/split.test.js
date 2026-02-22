@@ -507,6 +507,95 @@ console.log('\nTest 18: paid uses fallbackRate; due/remaining use live rate');
     `receipt is rate-independent: due=${dDue.receipt?.toFixed(4)} paid=${dPaid.receipt?.toFixed(4)}`);
 }
 
+// ── remainingBrl calculation ─────────────────────────────────────────────────
+
+// Mirrors the corrected formula from payments.html for BRL_ONLY_PEOPLE:
+//   remainingBrl = (tot.brl - paid.brl) + (tot.chf - paid.chf) * rate
+// This ensures both total and remaining use the same live rate for CHF.
+
+function computeRemainingBrl(tot, paid, rate) {
+  return (tot.brl - paid.brl) + (tot.chf - paid.chf) * rate;
+}
+
+// 19. BRL-only (CHF=0): remainingBrl = totalBrl - paidBrl regardless of rate
+console.log('\nTest 19: BRL-only (no CHF) — remainingBrl = totalBrl - paidBrl');
+{
+  const tot  = { chf: 0, brl: 986.81 };
+  const paid = { chf: 0, brl: 699.77 };
+  const rate = 6.8;
+  const totalBrl     = tot.brl  + tot.chf  * rate;         // 986.81
+  const remainingBrl = computeRemainingBrl(tot, paid, rate); // 287.04
+  assert(approxEq(totalBrl,     986.81, 1e-4), `totalBrl = ${totalBrl.toFixed(4)} (expected 986.81)`);
+  assert(approxEq(remainingBrl, 287.04, 1e-4), `remainingBrl = ${remainingBrl.toFixed(4)} (expected 287.04)`);
+}
+
+// 20. Mixed CHF+BRL: remainingBrl uses live rate, not fallbackRate
+console.log('\nTest 20: mixed CHF+BRL — remainingBrl uses live rate for CHF delta');
+{
+  const tot  = { chf: 10, brl: 500 };
+  const paid = { chf:  4, brl: 200 };
+  const liveRate     = 7.0;
+  const fallbackRate = 6.5;
+  // Correct: (500-200) + (10-4) * 7.0 = 300 + 42 = 342
+  const remainingLive = computeRemainingBrl(tot, paid, liveRate);
+  // Wrong formula would give: (500 + 10*7.0) - (200 + 4*6.5) = 570 - 226 = 344
+  const wrongRemaining = (tot.brl + tot.chf * liveRate) - (paid.brl + paid.chf * fallbackRate);
+  assert(approxEq(remainingLive, 342, 1e-6),
+    `remainingBrl (correct) = ${remainingLive.toFixed(4)} (expected 342)`);
+  assert(!approxEq(wrongRemaining, remainingLive, 1e-6),
+    `wrong formula (${wrongRemaining.toFixed(4)}) differs from correct (${remainingLive.toFixed(4)}) when rates differ`);
+}
+
+// 21. amount_chf: null → shares.chf = 0 for all beneficiaries
+console.log('\nTest 21: amount_chf: null → shares.chf = 0 for all beneficiaries');
+{
+  const expense = {
+    amount_chf: null,
+    amount_brl: 861.12,
+    beneficiaries: ['Claudio', 'Claudeane', 'Lucileide'],
+  };
+  const shares = computeSplit(expense, PEOPLE_MAP);
+  assert(approxEq(shares.Claudio.chf,   0), `Claudio.chf = ${shares.Claudio.chf} (expected 0 when amount_chf=null)`);
+  assert(approxEq(shares.Claudeane.chf, 0), `Claudeane.chf = ${shares.Claudeane.chf} (expected 0 when amount_chf=null)`);
+  assert(approxEq(shares.Lucileide.chf, 0), `Lucileide.chf = ${shares.Lucileide.chf} (expected 0 when amount_chf=null)`);
+}
+
+// 22. Lucileide end-to-end: tot=986.81, paid=699.77, remaining=287.04
+//     (mirrors actual data/expenses.json: E5 + E6 + E11, all amount_chf=null)
+console.log('\nTest 22: Lucileide end-to-end totals with current expense dataset');
+{
+  const expenses = [
+    // E5: 1300.17 BRL, 3 beneficiaries, paid
+    { id: 'E5', amount_chf: null, amount_brl: 1300.17, status: '✅ Payé',
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    // E6: 799.14 BRL, 3 beneficiaries, paid
+    { id: 'E6', amount_chf: null, amount_brl: 799.14, status: '✅ Payé',
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    // E11: 861.12 BRL, 3 beneficiaries (Claudio, Claudeane, Lucileide), unpaid
+    { id: 'E11', amount_chf: null, amount_brl: 861.12, status: '❌ NON PAYÉ',
+      beneficiaries: ['Claudio', 'Claudeane', 'Lucileide'] },
+  ];
+
+  const totals     = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const paidTotals = computePaidSummary(expenses,  ALL_PEOPLE, PEOPLE_MAP);
+
+  const tot  = totals.Lucileide;
+  const paid = paidTotals.Lucileide;
+
+  // tot.brl = 1300.17/3 + 799.14/3 + 861.12/3 = 433.39 + 266.38 + 287.04 = 986.81
+  assert(approxEq(tot.brl,  986.81, 1e-2), `Lucileide tot.brl  = ${tot.brl.toFixed(4)} (expected ≈986.81)`);
+  assert(approxEq(tot.chf,  0,      1e-9), `Lucileide tot.chf  = ${tot.chf} (expected 0)`);
+  // paid.brl = 1300.17/3 + 799.14/3 = 433.39 + 266.38 = 699.77
+  assert(approxEq(paid.brl, 699.77, 1e-2), `Lucileide paid.brl = ${paid.brl.toFixed(4)} (expected ≈699.77)`);
+  assert(approxEq(paid.chf, 0,      1e-9), `Lucileide paid.chf = ${paid.chf} (expected 0)`);
+
+  const rate = 6.8; // any rate — CHF portions are 0
+  const totalBrl     = tot.brl + tot.chf * rate;
+  const remainingBrl = computeRemainingBrl(tot, paid, rate);
+  assert(approxEq(totalBrl,     986.81, 1e-2), `Lucileide totalBrl     = ${totalBrl.toFixed(4)} (expected ≈986.81)`);
+  assert(approxEq(remainingBrl, 287.04, 1e-2), `Lucileide remainingBrl = ${remainingBrl.toFixed(4)} (expected ≈287.04)`);
+}
+
 // ── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${passed + failed} test(s): ${passed} passed, ${failed} failed.\n`);
 if (failed > 0) process.exit(1);
