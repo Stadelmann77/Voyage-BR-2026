@@ -111,14 +111,28 @@
     }
 
     // ── Weighted split ──────────────────────────────────────────
+    const ALL_FOUR_NAMES = ['Claudio', 'Claudeane', 'Lucileide', 'Jhemerson'];
+
+    function getEffectiveWeight(name, isAllFour, peopleMap) {
+      if (isAllFour && (name === 'Claudio' || name === 'Claudeane')) return 1.25;
+      return peopleMap[name]?.weight ?? 1.0;
+    }
+
     function computeSplit(expense, peopleMap) {
       const beneficiaries = expense.beneficiaries || [];
-      const totalWeight = beneficiaries.reduce((s, name) => s + (peopleMap[name]?.weight ?? 1.0), 0);
+
+      // Special case: exactly all 4 travellers → adjust Claudio & Claudeane to 1.25
+      const bSet = new Set(beneficiaries);
+      const isAllFour = bSet.size === ALL_FOUR_NAMES.length &&
+        ALL_FOUR_NAMES.every(n => bSet.has(n));
+
+      const totalWeight = beneficiaries.reduce(
+        (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap), 0);
       if (totalWeight === 0) return {};
 
       const shares = {};
       beneficiaries.forEach(name => {
-        const w = peopleMap[name]?.weight ?? 1.0;
+        const w = getEffectiveWeight(name, isAllFour, peopleMap);
         shares[name] = {
           chf: expense.amount_chf ? (expense.amount_chf * w / totalWeight) : 0,
           brl: expense.amount_brl ? (expense.amount_brl * w / totalWeight) : 0,
