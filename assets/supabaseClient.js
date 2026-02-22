@@ -1,8 +1,8 @@
 // assets/supabaseClient.js
 // Initialises a Supabase client from window.SUPABASE_URL / window.SUPABASE_ANON
 // set in assets/config.js (which is gitignored).
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// When config.js is missing (no Supabase account), the app runs in offline mode
+// using CSV data — the Supabase SDK is NOT loaded at all.
 
 const PLACEHOLDER_URL  = 'https://YOUR_PROJECT_REF.supabase.co';
 const PLACEHOLDER_ANON = 'YOUR_ANON_KEY_HERE';
@@ -14,17 +14,24 @@ export const configOk =
   !!window.SUPABASE_ANON &&
   window.SUPABASE_ANON !== PLACEHOLDER_ANON;
 
-if (!configOk) {
-  console.error(
-    '[supabaseClient] SUPABASE_URL or SUPABASE_ANON not defined or still placeholder. ' +
-    'Copy assets/config.example.js → assets/config.js and fill in your values.',
+let supabase = null;
+
+if (configOk) {
+  try {
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON);
+  } catch (err) {
+    console.error('[supabaseClient] Failed to load Supabase SDK:', err);
+  }
+} else {
+  console.warn(
+    '[supabaseClient] Offline mode — SUPABASE_URL or SUPABASE_ANON not configured. ' +
+    'Data will be loaded from CSV. To enable online mode, copy ' +
+    'assets/config.example.js → assets/config.js and fill in your values.',
   );
 }
 
-export const supabase = createClient(
-  window.SUPABASE_URL  || '',
-  window.SUPABASE_ANON || '',
-);
+export { supabase };
 
 /** Base URL for Supabase Edge Functions */
-export const FUNCTIONS_URL = `${window.SUPABASE_URL}/functions/v1`;
+export const FUNCTIONS_URL = configOk ? `${window.SUPABASE_URL}/functions/v1` : '';
