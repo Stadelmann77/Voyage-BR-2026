@@ -175,7 +175,7 @@ const fr = {
   'payments.perPerson':        'Résumé par personne',
   'payments.expenseTable':     '📋 Détail des dépenses',
   'payments.beneficiaries':    'Bénéficiaires (quote-part)',
-  'payments.weightNote':       'La quote-part de Jhemerson est pondérée à 0.5 (demi-part). Les autres voyageurs ont un poids de 1.0.',
+  'payments.weightNote':       'La quote-part de Jhemerson est pondérée à 0.5. Quand les 4 voyageurs sont bénéficiaires (option B), Claudio et Claudeane passent à 1.25 ; sinon tous restent à 1.0.',
   'payments.rate.live':        'temps réel',
   'payments.rate.fallback':    'taux de secours',
 
