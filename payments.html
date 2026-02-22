@@ -188,14 +188,17 @@
           return { exp, shares };
         });
 
-        // Accumulate amounts paid by each person (as payer)
+        // Accumulate per-person paid totals (share of expenses already marked as paid ✅)
         const paidTotals = {};
         people.forEach(p => { paidTotals[p.name] = { chf: 0, brl: 0 }; });
-        expenses.forEach(exp => {
-          const payer = exp.paid_by;
-          if (payer && paidTotals[payer]) {
-            paidTotals[payer].chf += exp.amount_chf || 0;
-            paidTotals[payer].brl += exp.amount_brl || 0;
+        expenseRows.forEach(({ exp, shares }) => {
+          if ((exp.status || '').startsWith('✅')) {
+            Object.entries(shares).forEach(([name, s]) => {
+              if (paidTotals[name]) {
+                paidTotals[name].chf += s.chf;
+                paidTotals[name].brl += s.brl;
+              }
+            });
           }
         });
 

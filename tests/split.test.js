@@ -118,6 +118,69 @@ console.log('\nTest 3: {Claudio, Lucileide, Jhemerson} → Claudio weight 1.0');
     `Claudio share is NOT the 1.25-weight value (${wrongValue.toFixed(4)})`);
 }
 
+// ── computePaidSummary (replicated from payments.html fix) ───────────────────
+
+function computePaidSummary(expenses, people, peopleMap) {
+  const paidTotals = {};
+  people.forEach(p => { paidTotals[p.name] = { chf: 0, brl: 0 }; });
+  expenses.forEach(exp => {
+    if ((exp.status || '').startsWith('✅')) {
+      const shares = computeSplit(exp, peopleMap);
+      Object.entries(shares).forEach(([name, s]) => {
+        if (paidTotals[name]) {
+          paidTotals[name].chf += s.chf;
+          paidTotals[name].brl += s.brl;
+        }
+      });
+    }
+  });
+  return paidTotals;
+}
+
+const ALL_PEOPLE = Object.keys(PEOPLE_MAP).map(name => ({ name, ...PEOPLE_MAP[name] }));
+
+// 4. Paid BRL expenses reflected in paidTotals for Lucileide/Jhemerson
+console.log('\nTest 4: paid BRL expenses show in paidTotals for Lucileide/Jhemerson');
+{
+  const expenses = [
+    { amount_chf: null, amount_brl: 1300.17, status: '✅ Payé',
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    { amount_chf: null, amount_brl: 799.14,  status: '✅ Payé',
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    { amount_chf: null, amount_brl: 3132.3,  status: '⚠️ À PAYER',
+      beneficiaries: ['Claudio'] },
+  ];
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+
+  // Weights: Claudeane=1.0, Lucileide=1.0, Jhemerson=0.5 → totalWeight=2.5
+  const expectedLucileide = (1300.17 * 1.0 / 2.5) + (799.14 * 1.0 / 2.5);
+  const expectedJhemerson = (1300.17 * 0.5 / 2.5) + (799.14 * 0.5 / 2.5);
+
+  assert(paidTotals.Lucileide.brl > 0,
+    `Lucileide paid BRL > 0 (was 0 before fix, got ${paidTotals.Lucileide.brl.toFixed(4)})`);
+  assert(approxEq(paidTotals.Lucileide.brl, expectedLucileide, 1e-6),
+    `Lucileide paid BRL = ${paidTotals.Lucileide.brl.toFixed(4)} (expected ${expectedLucileide.toFixed(4)})`);
+  assert(paidTotals.Jhemerson.brl > 0,
+    `Jhemerson paid BRL > 0 (was 0 before fix, got ${paidTotals.Jhemerson.brl.toFixed(4)})`);
+  assert(approxEq(paidTotals.Jhemerson.brl, expectedJhemerson, 1e-6),
+    `Jhemerson paid BRL = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected ${expectedJhemerson.toFixed(4)})`);
+  assert(approxEq(paidTotals.Claudio.brl, 0),
+    'Unpaid expense not counted in paidTotals for Claudio');
+}
+
+// 5. Unpaid expenses are excluded from paidTotals
+console.log('\nTest 5: unpaid (❌/⚠️) expenses excluded from paidTotals');
+{
+  const expenses = [
+    { amount_chf: 100, amount_brl: null, status: '❌ NON PAYÉ', beneficiaries: ['Claudio'] },
+    { amount_chf: 200, amount_brl: null, status: '✅ Payé',    beneficiaries: ['Claudio'] },
+    { amount_chf: 50,  amount_brl: null, status: '⚠️ À PAYER', beneficiaries: ['Claudio'] },
+  ];
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  assert(approxEq(paidTotals.Claudio.chf, 200),
+    `Claudio paid CHF = ${paidTotals.Claudio.chf} (expected 200, only ✅ expense counted)`);
+}
+
 // ── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${passed + failed} test(s): ${passed} passed, ${failed} failed.\n`);
 if (failed > 0) process.exit(1);
