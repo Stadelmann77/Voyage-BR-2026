@@ -214,7 +214,7 @@ export default {
           if (!f.path || f.content == null) throw new Error(`File entry missing path or content`);
           const blobRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/blobs`, {
             method: 'POST', headers,
-            body: JSON.stringify({ content: f.content, encoding: 'utf-8' }),
+            body: JSON.stringify({ content: f.content, encoding: f.encoding || 'utf-8' }),
           });
           if (!blobRes.ok) throw new Error(`Blob creation failed for ${f.path}`);
           const blob = await blobRes.json();

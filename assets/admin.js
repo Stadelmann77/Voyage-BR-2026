@@ -2,7 +2,7 @@
 // Admin page: GitHub OAuth via Cloudflare Worker + Git-based data editing.
 // Read-only mode works without a Worker; editing requires authentication.
 
-import { escHtml, fmtDate, parseBrl } from './public.js';
+import { escHtml, fmtDate, parseBrl, sanitizeFilename, uniqueFilename } from './public.js';
 import { t } from './i18n.js';
 
 const WORKER_STORAGE_KEY = 'admin_worker_url';
@@ -127,6 +127,7 @@ async function loadAdminTab(tab) {
     transport: loadTransportAdmin,
     payments:  loadPaymentsAdmin,
     checklist: loadChecklistAdmin,
+    content:   loadContentAdmin,
   };
 
   const loader = loaders[tab];
@@ -151,6 +152,35 @@ async function commitFile(path, content, message) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Commit failed');
   return data;
+}
+
+// Commit multiple files in one request (supports encoding per file)
+async function commitFiles(files, message) {
+  if (!workerUrl || !adminToken) throw new Error('Non authentifié');
+  const res = await fetch(`${workerUrl}/api/commit`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${adminToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message, files }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Commit failed');
+  return data;
+}
+
+// Read a File as base64 string (data URL → strip prefix)
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result; // data:<type>;base64,<data>
+      resolve(result.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // ── Status dropdown helper ───────────────────────────────────
@@ -529,4 +559,283 @@ async function loadChecklistAdmin(body) {
       msgEl.innerHTML = `<div class="alert alert-danger">❌ ${escHtml(e.message)}</div>`;
     }
   });
+}
+
+// ── Content Admin ────────────────────────────────────────────
+const CONTENT_SECTIONS = ['baggage', 'seats', 'attractions', 'restaurants', 'documents'];
+const CONTENT_SECTION_LABELS = {
+  baggage: '🧳 Bagages',
+  seats: '💺 Sièges',
+  attractions: '🗺️ Attractions',
+  restaurants: '🍽️ Restaurants',
+  documents: '📄 Documents',
+};
+
+async function loadContentAdmin(body) {
+  // State
+  let currentLang = 'fr';
+  let currentSection = 'baggage';
+  let items = [];
+  let editingIdx = -1; // -1 = new item
+
+  function contentPath() {
+    return `data/${currentLang}/content/${currentSection}.json`;
+  }
+
+  async function fetchItems() {
+    const res = await fetch(contentPath() + '?_=' + Date.now());
+    if (!res.ok) return [];
+    return res.json();
+  }
+
+  function generateId() {
+    return currentSection + '_' + Date.now();
+  }
+
+  function renderList() {
+    const listEl = body.querySelector('#content-item-list');
+    if (!listEl) return;
+    if (items.length === 0) {
+      listEl.innerHTML = `<p style="color:var(--text-light);padding:.5rem 0">${escHtml(t('admin.content.noItems'))}</p>`;
+      return;
+    }
+    listEl.innerHTML = items.map((item, idx) => `
+      <div class="content-list-row" style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border,#e5e7eb)">
+        <span style="flex:1;font-size:.9rem">${escHtml(item.id)} — ${escHtml(item.title)}</span>
+        <button class="btn btn-outline btn-sm content-edit-btn" data-idx="${idx}">${escHtml(t('common.edit'))}</button>
+        <button class="btn btn-outline btn-sm content-del-btn" data-idx="${idx}" style="color:#dc2626">${escHtml(t('admin.content.deleteItem'))}</button>
+      </div>`).join('');
+  }
+
+  function clearForm() {
+    body.querySelector('#ci-id').value = '';
+    body.querySelector('#ci-title').value = '';
+    body.querySelector('#ci-description').value = '';
+    body.querySelector('#ci-date').value = '';
+    body.querySelector('#ci-links').value = '';
+    body.querySelector('#ci-attachments').value = '';
+    editingIdx = -1;
+    body.querySelector('#content-form-title').textContent = t('admin.content.newItem');
+    body.querySelector('#content-msg').innerHTML = '';
+  }
+
+  function fillForm(item, idx) {
+    editingIdx = idx;
+    body.querySelector('#ci-id').value = item.id || '';
+    body.querySelector('#ci-title').value = item.title || '';
+    body.querySelector('#ci-description').value = item.description || '';
+    body.querySelector('#ci-date').value = item.date || '';
+    body.querySelector('#ci-links').value = item.links ? JSON.stringify(item.links) : '';
+    body.querySelector('#ci-attachments').value = item.attachments ? JSON.stringify(item.attachments) : '';
+    body.querySelector('#content-form-title').textContent = t('common.edit') + ': ' + escHtml(item.title);
+    body.querySelector('#content-msg').innerHTML = '';
+  }
+
+  async function reloadItems() {
+    items = await fetchItems();
+    renderList();
+    clearForm();
+  }
+
+  // ── Render shell
+  body.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+      <h2 style="margin:0">📝 ${escHtml(t('admin.tab.content'))}</h2>
+    </div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+      <div>
+        <label style="font-weight:600;display:block;margin-bottom:.25rem">${escHtml(t('admin.content.lang'))}</label>
+        <select id="content-lang-sel" class="status-edit-select">
+          <option value="fr">FR — Français</option>
+          <option value="pt-BR">PT — Português</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-weight:600;display:block;margin-bottom:.25rem">${escHtml(t('admin.content.section'))}</label>
+        <select id="content-section-sel" class="status-edit-select">
+          ${CONTENT_SECTIONS.map(s => `<option value="${escHtml(s)}">${escHtml(CONTENT_SECTION_LABELS[s] || s)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start" id="content-grid">
+      <!-- List -->
+      <div class="card" style="padding:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <strong>${escHtml(t('admin.content.section'))}</strong>
+          <button class="btn btn-primary btn-sm" id="content-new-btn">${escHtml(t('admin.content.newItem'))}</button>
+        </div>
+        <div id="content-item-list"><div class="loading-center"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- Form -->
+      <div class="card" style="padding:1rem">
+        <strong id="content-form-title" style="display:block;margin-bottom:.75rem">${escHtml(t('admin.content.newItem'))}</strong>
+        <div style="display:grid;gap:.65rem">
+          <div>
+            <label style="font-size:.85rem;font-weight:600">${escHtml(t('admin.content.id'))}</label>
+            <input type="text" id="ci-id" style="width:100%;box-sizing:border-box;font-size:.85rem" placeholder="auto">
+          </div>
+          <div>
+            <label style="font-size:.85rem;font-weight:600">${escHtml(t('admin.content.title'))}</label>
+            <input type="text" id="ci-title" style="width:100%;box-sizing:border-box;font-size:.85rem">
+          </div>
+          <div>
+            <label style="font-size:.85rem;font-weight:600">${escHtml(t('admin.content.description'))}</label>
+            <textarea id="ci-description" rows="3" style="width:100%;box-sizing:border-box;font-size:.85rem"></textarea>
+          </div>
+          <div>
+            <label style="font-size:.85rem;font-weight:600">${escHtml(t('admin.content.date'))}</label>
+            <input type="text" id="ci-date" style="width:100%;box-sizing:border-box;font-size:.85rem" placeholder="YYYY-MM-DD">
+          </div>
+          <div>
+            <label style="font-size:.85rem;font-weight:600">${escHtml(t('admin.content.links'))}</label>
+            <textarea id="ci-links" rows="2" style="width:100%;box-sizing:border-box;font-size:.85rem" placeholder='[{"label":"...","url":"..."}]'></textarea>
+          </div>
+          <div>
+            <label style="font-size:.85rem;font-weight:600">${escHtml(t('admin.content.attachments'))}</label>
+            <textarea id="ci-attachments" rows="2" style="width:100%;box-sizing:border-box;font-size:.85rem" placeholder='[{"label":"...","url":"...","type":"pdf"}]'></textarea>
+          </div>
+
+          <!-- Upload -->
+          <div style="border:1px dashed var(--border,#e5e7eb);border-radius:.5rem;padding:.75rem">
+            <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:.35rem">${escHtml(t('admin.content.upload'))}</label>
+            <input type="file" id="ci-file" accept=".pdf,.jpg,.jpeg,.png" style="font-size:.85rem">
+            <button class="btn btn-outline btn-sm" id="ci-upload-btn" style="margin-top:.5rem">${escHtml(t('admin.content.uploadBtn'))}</button>
+            <div id="ci-upload-msg" style="font-size:.8rem;margin-top:.35rem"></div>
+          </div>
+
+          <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.25rem">
+            <button class="btn btn-outline btn-sm" id="content-cancel-btn">${escHtml(t('admin.content.cancelEdit'))}</button>
+            <button class="btn btn-primary btn-sm" id="content-save-btn">${escHtml(t('admin.content.saveItem'))}</button>
+          </div>
+          <div id="content-msg" style="margin-top:.25rem"></div>
+        </div>
+      </div>
+    </div>`;
+
+  // Load initial items
+  await reloadItems();
+
+  // ── Lang / section selectors
+  body.querySelector('#content-lang-sel').addEventListener('change', async e => {
+    currentLang = e.target.value;
+    await reloadItems();
+  });
+  body.querySelector('#content-section-sel').addEventListener('change', async e => {
+    currentSection = e.target.value;
+    await reloadItems();
+  });
+
+  // ── New item
+  body.querySelector('#content-new-btn').addEventListener('click', () => {
+    clearForm();
+  });
+
+  // ── Cancel
+  body.querySelector('#content-cancel-btn').addEventListener('click', () => {
+    clearForm();
+  });
+
+  // ── Edit / delete via list
+  body.querySelector('#content-item-list').addEventListener('click', e => {
+    const editBtn = e.target.closest('.content-edit-btn');
+    const delBtn  = e.target.closest('.content-del-btn');
+    if (editBtn) {
+      fillForm(items[Number(editBtn.dataset.idx)], Number(editBtn.dataset.idx));
+    } else if (delBtn) {
+      const idx = Number(delBtn.dataset.idx);
+      if (!confirm(t('admin.content.confirmDelete').replace('{name}', items[idx]?.title || items[idx]?.id || ''))) return;
+      items.splice(idx, 1);
+      saveItemsAndReload('admin: delete content item');
+    }
+  });
+
+  // ── File upload
+  body.querySelector('#ci-upload-btn').addEventListener('click', async () => {
+    const msgEl = body.querySelector('#ci-upload-msg');
+    const fileInput = body.querySelector('#ci-file');
+    const file = fileInput.files[0];
+    if (!file) { msgEl.textContent = '⚠️ Aucun fichier sélectionné.'; return; }
+
+    // Validate type
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|jpg|jpeg|png)$/i)) {
+      msgEl.textContent = '⚠️ Format non supporté (pdf/jpg/png).';
+      return;
+    }
+
+    msgEl.textContent = '⏳ Upload en cours…';
+    try {
+      const safeName = uniqueFilename(sanitizeFilename(file.name));
+      const uploadPath = `assets/uploads/${safeName}`;
+      const base64content = await fileToBase64(file);
+      await commitFiles(
+        [{ path: uploadPath, content: base64content, encoding: 'base64' }],
+        `admin: upload file ${safeName}`,
+      );
+      msgEl.innerHTML = `✅ Fichier uploadé: <code>${escHtml(uploadPath)}</code>`;
+
+      // Append to attachments textarea
+      const attEl = body.querySelector('#ci-attachments');
+      let existing = [];
+      try { existing = JSON.parse(attEl.value || '[]'); } catch (_) { existing = []; }
+      const ext = safeName.split('.').pop().toLowerCase();
+      const type = ext === 'pdf' ? 'pdf' : 'image';
+      existing.push({ label: file.name, url: uploadPath, type });
+      attEl.value = JSON.stringify(existing, null, 2);
+    } catch (err) {
+      msgEl.innerHTML = `❌ ${escHtml(err.message)}`;
+    }
+  });
+
+  // ── Save item
+  body.querySelector('#content-save-btn').addEventListener('click', async () => {
+    const msgEl = body.querySelector('#content-msg');
+    const idVal    = body.querySelector('#ci-id').value.trim() || generateId();
+    const title    = body.querySelector('#ci-title').value.trim();
+    const desc     = body.querySelector('#ci-description').value.trim();
+    const date     = body.querySelector('#ci-date').value.trim();
+    const linksRaw = body.querySelector('#ci-links').value.trim();
+    const attRaw   = body.querySelector('#ci-attachments').value.trim();
+
+    if (!title) { msgEl.innerHTML = '<div class="alert alert-danger">⚠️ Le titre est requis.</div>'; return; }
+
+    let links = [];
+    let attachments = [];
+    try { if (linksRaw) links = JSON.parse(linksRaw); } catch (_) {
+      msgEl.innerHTML = '<div class="alert alert-danger">⚠️ JSON invalide dans « Liens ».</div>'; return;
+    }
+    try { if (attRaw) attachments = JSON.parse(attRaw); } catch (_) {
+      msgEl.innerHTML = '<div class="alert alert-danger">⚠️ JSON invalide dans « Pièces jointes ».</div>'; return;
+    }
+
+    const newItem = { id: idVal, title };
+    if (desc)              newItem.description  = desc;
+    if (date)              newItem.date         = date;
+    if (links.length)      newItem.links        = links;
+    if (attachments.length) newItem.attachments = attachments;
+
+    if (editingIdx >= 0) {
+      items[editingIdx] = newItem;
+    } else {
+      items.push(newItem);
+    }
+
+    await saveItemsAndReload('admin: update content ' + currentSection);
+  });
+
+  async function saveItemsAndReload(message) {
+    const msgEl = body.querySelector('#content-msg');
+    try {
+      const result = await commitFile(contentPath(), items, message);
+      if (msgEl) msgEl.innerHTML = `<div class="alert alert-success">✅ ${escHtml(t('admin.content.saved'))} — commit ${escHtml(result.commit_sha?.slice(0, 7) || '')}</div>`;
+      // Refresh the list
+      items = await fetchItems();
+      renderList();
+      clearForm();
+    } catch (e) {
+      if (msgEl) msgEl.innerHTML = `<div class="alert alert-danger">❌ ${escHtml(e.message)}</div>`;
+    }
+  }
 }

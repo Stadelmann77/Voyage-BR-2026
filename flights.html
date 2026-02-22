@@ -22,6 +22,7 @@
       <a href="payments.html" data-i18n="nav.payments">💰 Paiements</a>
       <a href="contacts.html" data-i18n="nav.contacts">📞 Contacts</a>
       <a href="checklist.html" data-i18n="nav.checklist">✅ Checklist</a>
+      <a href="attractions-restaurants.html" data-i18n="nav.attractions">🗺️ Attraits &amp; Restos</a>
     </div>
     <div class="nav-spacer"></div>
     <div class="lang-toggle">
@@ -81,6 +82,11 @@
         </table>
       </div>
     </div>
+
+    <!-- Baggage info section -->
+    <div id="baggage-section" style="margin-top:1.5rem"></div>
+    <!-- Seats info section -->
+    <div id="seats-section" style="margin-top:1rem"></div>
   </main>
 
   <!-- Globe Modal -->
@@ -101,5 +107,52 @@
   </footer>
 
   <script type="module" src="assets/flights.js"></script>
+  <script type="module">
+    import { fetchContent, escHtml } from './assets/public.js';
+    import { lang } from './assets/i18n.js';
+    import { t } from './assets/i18n.js';
+
+    function renderContentSection(container, items, sectionKey) {
+      if (!items || items.length === 0) return;
+      let html = `<div class="card"><h2>${escHtml(t(sectionKey))}</h2>`;
+      items.forEach(item => {
+        html += `<div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border,#e5e7eb)">
+          <h3 style="margin:0 0 .35rem">${escHtml(item.title)}</h3>`;
+        if (item.date) html += `<p style="font-size:.8rem;color:var(--text-light)">${escHtml(t('content.date'))}: ${escHtml(item.date)}</p>`;
+        if (item.description) html += `<p style="white-space:pre-line">${escHtml(item.description)}</p>`;
+        if (item.links && item.links.length) {
+          html += `<p style="font-weight:600;margin-bottom:.25rem">${escHtml(t('content.links'))}</p><ul style="margin:0;padding-left:1.2rem">`;
+          item.links.forEach(l => { html += `<li><a href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.label)}</a></li>`; });
+          html += '</ul>';
+        }
+        if (item.attachments && item.attachments.length) {
+          html += `<p style="font-weight:600;margin:.5rem 0 .25rem">${escHtml(t('content.attachments'))}</p><div style="display:flex;flex-wrap:wrap;gap:.5rem">`;
+          item.attachments.forEach(a => {
+            const icon = a.type === 'pdf' ? '📄' : '🖼️';
+            html += `<a href="${escHtml(a.url)}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">${icon} ${escHtml(a.label)}</a>`;
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    async function loadFlightContent() {
+      const currentLang = lang;
+      try {
+        const [baggage, seats] = await Promise.all([
+          fetchContent(currentLang, 'baggage'),
+          fetchContent(currentLang, 'seats'),
+        ]);
+        renderContentSection(document.getElementById('baggage-section'), baggage, 'section.baggage');
+        renderContentSection(document.getElementById('seats-section'), seats, 'section.seats');
+      } catch (_) { /* content sections are optional */ }
+    }
+
+    loadFlightContent();
+    document.addEventListener('langchange', loadFlightContent);
+  </script>
 </body>
 </html>
