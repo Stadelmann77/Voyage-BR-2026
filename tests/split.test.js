@@ -1,13 +1,12 @@
 /**
- * Unit tests for the weighted split logic (Option B rules).
+ * Unit tests for the weighted split logic.
  * Run with: node tests/split.test.js
  *
  * Rules:
- *   - Default weights: Claudio=1.0, Claudeane=1.0, Lucileide=1.0, Jhemerson=0.5
- *   - When beneficiaries == exactly {Claudio, Claudeane, Lucileide, Jhemerson}:
- *       Claudio=1.25, Claudeane=1.25, Lucileide=1.0, Jhemerson=0.5
- *   - Any other subset: Claudio and Claudeane remain 1.0
- *   - Jhemerson per-category quota: flight=1.0, all others=0.5 (from people.json)
+ *   - All 4 beneficiaries + non-flight: Claudio=1.25, Claudeane=1.25,
+ *       Lucileide=1.0, Jhemerson=0.5
+ *   - All 4 beneficiaries + flight: equal split (weight = 1 each)
+ *   - Subset (not all 4): equal split always (1/n), regardless of category
  */
 
 // ── Replicated logic from payments.html ─────────────────────────────────────
@@ -21,9 +20,6 @@ const PEOPLE_MAP = {
   Jhemerson: { weight: 0.5 },
 };
 
-// Jhemerson quota override by category (mirrors payments.html)
-const JHEMERSON_CATEGORY_QUOTA = { flight: 1.0 };
-
 // parseBrl replicated here (assets/public.js is a browser ES module; Node.js
 // tests cannot import it directly without a bundler).
 function parseBrl(val) {
@@ -36,13 +32,11 @@ function parseBrl(val) {
   return parseFloat(s);
 }
 
-function getEffectiveWeight(name, isAllFour, peopleMap, category) {
-  if (name === 'Jhemerson') {
-    const override = JHEMERSON_CATEGORY_QUOTA[category];
-    if (override !== undefined) return override;
-  }
-  if (isAllFour && (name === 'Claudio' || name === 'Claudeane')) return 1.25;
-  return peopleMap[name]?.weight ?? 1.0;
+function getEffectiveWeight(name, isAllFour, category) {
+  if (!isAllFour || category === 'flight') return 1.0;
+  if (name === 'Claudio' || name === 'Claudeane') return 1.25;
+  if (name === 'Jhemerson') return 0.5;
+  return 1.0; // Lucileide
 }
 
 function computeSplit(expense, peopleMap) {
@@ -53,13 +47,13 @@ function computeSplit(expense, peopleMap) {
     bSet.size === ALL_FOUR_NAMES.length && ALL_FOUR_NAMES.every(n => bSet.has(n));
 
   const totalWeight = beneficiaries.reduce(
-    (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap, category), 0);
+    (s, name) => s + getEffectiveWeight(name, isAllFour, category), 0);
   if (totalWeight === 0) return {};
 
   const amtBrl = parseBrl(expense.amount_brl);
   const shares = {};
   beneficiaries.forEach(name => {
-    const w = getEffectiveWeight(name, isAllFour, peopleMap, category);
+    const w = getEffectiveWeight(name, isAllFour, category);
     shares[name] = {
       chf: expense.amount_chf ? expense.amount_chf * w / totalWeight : 0,
       brl: amtBrl ? amtBrl * w / totalWeight : 0,
@@ -110,11 +104,34 @@ console.log('\nTest 1: all 4 beneficiaries → special weights 1.25/1.25/1.0/0.5
   assert(approxEq(sum, 400), `shares sum to total (${sum.toFixed(4)} ≈ 400)`);
 }
 
-// 2. Only {Claudio, Claudeane} → weights 1.0 / 1.0
-console.log('\nTest 2: {Claudio, Claudeane} only → weights 1.0/1.0');
+// 1b. All 4 beneficiaries + flight → equal split (everyone weight = 1)
+console.log('\nTest 1b: all 4 beneficiaries + flight → equal split');
+{
+  const expense = {
+    category: 'flight',
+    amount_chf: 400,
+    beneficiaries: ['Claudio', 'Claudeane', 'Lucileide', 'Jhemerson'],
+  };
+  // All 4 + flight → equal split: each = 400/4 = 100
+  const shares = computeSplit(expense, PEOPLE_MAP);
+  assert(approxEq(shares.Claudio.chf, 100),
+    `Claudio flight share = ${shares.Claudio.chf.toFixed(4)} (expected 100, equal split)`);
+  assert(approxEq(shares.Claudeane.chf, 100),
+    `Claudeane flight share = ${shares.Claudeane.chf.toFixed(4)} (expected 100, equal split)`);
+  assert(approxEq(shares.Lucileide.chf, 100),
+    `Lucileide flight share = ${shares.Lucileide.chf.toFixed(4)} (expected 100, equal split)`);
+  assert(approxEq(shares.Jhemerson.chf, 100),
+    `Jhemerson flight share = ${shares.Jhemerson.chf.toFixed(4)} (expected 100, equal split)`);
+  // Confirm Claudio does NOT use 1.25 weight for all-4 flights
+  assert(!approxEq(shares.Claudio.chf, 400 * 1.25 / 4.5),
+    `Claudio does NOT use 1.25 weight for all-4 flights`);
+}
+
+// 2. Only {Claudio, Claudeane} → equal split (1/2 each)
+console.log('\nTest 2: {Claudio, Claudeane} only → equal split');
 {
   const expense = { amount_chf: 200, beneficiaries: ['Claudio', 'Claudeane'] };
-  // total weight = 1.0+1.0 = 2.0 → each 100
+  // Not all 4 → equal split: each = 200/2 = 100
   const shares = computeSplit(expense, PEOPLE_MAP);
   assert(approxEq(shares.Claudio.chf, 100),
     `Claudio share = ${shares.Claudio.chf.toFixed(4)} (expected 100)`);
@@ -122,22 +139,25 @@ console.log('\nTest 2: {Claudio, Claudeane} only → weights 1.0/1.0');
     `Claudeane share = ${shares.Claudeane.chf.toFixed(4)} (expected 100)`);
 }
 
-// 3. {Claudio, Lucileide, Jhemerson} → Claudio weight is 1.0
-console.log('\nTest 3: {Claudio, Lucileide, Jhemerson} → Claudio weight 1.0');
+// 3. {Claudio, Lucileide, Jhemerson} → equal split (not all 4)
+console.log('\nTest 3: {Claudio, Lucileide, Jhemerson} → equal split (not all 4)');
 {
   const expense = {
     amount_chf: 250,
     beneficiaries: ['Claudio', 'Lucileide', 'Jhemerson'],
   };
-  // total weight = 1.0+1.0+0.5 = 2.5
+  // Not all 4 → equal split: each = 250/3
   const shares = computeSplit(expense, PEOPLE_MAP);
-  const expectedClaudio = 250 * 1.0 / 2.5; // = 100
-  assert(approxEq(shares.Claudio.chf, expectedClaudio),
-    `Claudio share = ${shares.Claudio.chf.toFixed(4)} (expected ${expectedClaudio.toFixed(4)} with weight 1.0)`);
-  // Confirm Claudio's effective share is not the 1.25 value
-  const wrongValue = 250 * 1.25 / (1.25 + 1.0 + 0.5);
-  assert(!approxEq(shares.Claudio.chf, wrongValue),
-    `Claudio share is NOT the 1.25-weight value (${wrongValue.toFixed(4)})`);
+  const expectedEach = 250 / 3;
+  assert(approxEq(shares.Claudio.chf, expectedEach),
+    `Claudio share = ${shares.Claudio.chf.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
+  assert(approxEq(shares.Lucileide.chf, expectedEach),
+    `Lucileide share = ${shares.Lucileide.chf.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
+  assert(approxEq(shares.Jhemerson.chf, expectedEach),
+    `Jhemerson share = ${shares.Jhemerson.chf.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
+  // Confirm Claudio does NOT use old weighted value (100 = 250 × 1.0 / 2.5)
+  assert(!approxEq(shares.Claudio.chf, 100),
+    `Claudio share is NOT the old weighted value (100 = 250×1.0/2.5) — uses equal split`);
 }
 
 // ── getEffectivePaidRatio (mirrors payments.html) ────────────────────────────
@@ -205,18 +225,17 @@ console.log('\nTest 4: paid BRL expenses show in paidTotals for Lucileide/Jhemer
   ];
   const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
 
-  // Weights: Claudeane=1.0, Lucileide=1.0, Jhemerson=0.5 → totalWeight=2.5
-  const expectedLucileide = (1300.17 * 1.0 / 2.5) + (799.14 * 1.0 / 2.5);
-  const expectedJhemerson = (1300.17 * 0.5 / 2.5) + (799.14 * 0.5 / 2.5);
+  // Not all 4 → equal split: each of 3 gets 1/3
+  const expectedEach = (1300.17 + 799.14) / 3;
 
   assert(paidTotals.Lucileide.brl > 0,
     `Lucileide paid BRL > 0 (was 0 before fix, got ${paidTotals.Lucileide.brl.toFixed(4)})`);
-  assert(approxEq(paidTotals.Lucileide.brl, expectedLucileide, 1e-6),
-    `Lucileide paid BRL = ${paidTotals.Lucileide.brl.toFixed(4)} (expected ${expectedLucileide.toFixed(4)})`);
+  assert(approxEq(paidTotals.Lucileide.brl, expectedEach, 1e-6),
+    `Lucileide paid BRL = ${paidTotals.Lucileide.brl.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
   assert(paidTotals.Jhemerson.brl > 0,
     `Jhemerson paid BRL > 0 (was 0 before fix, got ${paidTotals.Jhemerson.brl.toFixed(4)})`);
-  assert(approxEq(paidTotals.Jhemerson.brl, expectedJhemerson, 1e-6),
-    `Jhemerson paid BRL = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected ${expectedJhemerson.toFixed(4)})`);
+  assert(approxEq(paidTotals.Jhemerson.brl, expectedEach, 1e-6),
+    `Jhemerson paid BRL = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
   assert(approxEq(paidTotals.Claudio.brl, 0),
     'Unpaid expense not counted in paidTotals for Claudio');
 }
@@ -273,40 +292,46 @@ console.log('\nTest 7: parseBrl handles pt-BR number format');
     `computeSplit with BRL string '3.132,30': Claudio = ${shares.Claudio.brl.toFixed(2)} (expected 3132.30)`);
 }
 
-// 8. Jhemerson quota = 1.0 for flight category
-console.log('\nTest 8: Jhemerson quota = 1.0 for flights (equal share)');
+// 8. Subset + flight → equal split (Jhemerson regression)
+console.log('\nTest 8: subset + flight → equal split (Jhemerson regression)');
 {
   const expense = {
     category: 'flight',
     amount_brl: 1300.17,
     beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'],
   };
-  // Flight quota: Claudeane=1.0, Lucileide=1.0, Jhemerson=1.0 → totalWeight=3.0
+  // Not all 4 → equal split: each = 1300.17/3
   const shares = computeSplit(expense, PEOPLE_MAP);
   const expected = 1300.17 / 3.0;
   assert(approxEq(shares.Jhemerson.brl, expected, 1e-6),
-    `Jhemerson flight share = ${shares.Jhemerson.brl.toFixed(4)} (expected ${expected.toFixed(4)} with quota 1.0)`);
+    `Jhemerson flight share = ${shares.Jhemerson.brl.toFixed(4)} (expected ${expected.toFixed(4)} equal split)`);
   assert(approxEq(shares.Claudeane.brl, expected, 1e-6),
     `Claudeane flight share = ${shares.Claudeane.brl.toFixed(4)} (expected ${expected.toFixed(4)})`);
+  assert(approxEq(shares.Lucileide.brl, expected, 1e-6),
+    `Lucileide flight share = ${shares.Lucileide.brl.toFixed(4)} (expected ${expected.toFixed(4)})`);
   // Confirm it's NOT the old 0.5-weight value
   const oldValue = 1300.17 * 0.5 / 2.5;
   assert(!approxEq(shares.Jhemerson.brl, oldValue, 1e-6),
     `Jhemerson NOT using old 0.5 weight for flight (old value was ${oldValue.toFixed(4)})`);
 }
 
-// 9. Jhemerson quota = 0.5 for lodging (default, unchanged)
-console.log('\nTest 9: Jhemerson quota = 0.5 for lodging (default unchanged)');
+// 9. Subset + non-flight → equal split (Jhemerson does NOT get 0.5 weight)
+console.log('\nTest 9: subset + lodging → equal split (Jhemerson not weighted 0.5)');
 {
   const expense = {
     category: 'lodging',
     amount_chf: 200,
     beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'],
   };
-  // Lodging: Claudeane=1.0, Lucileide=1.0, Jhemerson=0.5 → totalWeight=2.5
+  // Not all 4 → equal split: each = 200/3
   const shares = computeSplit(expense, PEOPLE_MAP);
-  const expectedJhemerson = 200 * 0.5 / 2.5; // = 40
-  assert(approxEq(shares.Jhemerson.chf, expectedJhemerson, 1e-6),
-    `Jhemerson lodging share = ${shares.Jhemerson.chf.toFixed(4)} (expected ${expectedJhemerson.toFixed(4)} with quota 0.5)`);
+  const expectedEach = 200 / 3;
+  assert(approxEq(shares.Jhemerson.chf, expectedEach, 1e-6),
+    `Jhemerson lodging share = ${shares.Jhemerson.chf.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
+  // Confirm it's NOT the old 0.5-weight value (40)
+  const oldValue = 200 * 0.5 / 2.5; // = 40
+  assert(!approxEq(shares.Jhemerson.chf, oldValue, 1e-6),
+    `Jhemerson NOT using old 0.5 weight for lodging subset (old value was ${oldValue.toFixed(4)})`);
 }
 
 // ── Partial payment tests ─────────────────────────────────────────────────────
@@ -374,8 +399,8 @@ console.log('\nTest 13: ✅ status → ratio=1 regardless of paid_ratio or paid_
     `✅ status with paid_amount → ratio = ${getEffectivePaidRatio(expWithAmount)} (expected 1, not 0.4)`);
 }
 
-// 14. Partial payment with multiple beneficiaries
-console.log('\nTest 14: partial payment split across multiple beneficiaries');
+// 14. Partial payment with multiple beneficiaries (subset → equal split)
+console.log('\nTest 14: partial payment split across multiple beneficiaries (equal split)');
 {
   const expenses = [
     {
@@ -386,16 +411,16 @@ console.log('\nTest 14: partial payment split across multiple beneficiaries');
       category: 'lodging',
     },
   ];
-  // weights: Claudeane=1.0, Lucileide=1.0, Jhemerson=0.5 → totalWeight=2.5
-  // full shares: Claudeane=400, Lucileide=400, Jhemerson=200
-  // paid (×0.5): Claudeane=200, Lucileide=200, Jhemerson=100
+  // Not all 4 → equal split: each = 1000/3
+  // paid (×0.5): each = 500/3 ≈ 166.67
+  const expectedEach = 1000 / 3 * 0.5;
   const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
-  assert(approxEq(paidTotals.Claudeane.brl, 200, 1e-6),
-    `Claudeane JÁ PAGO BRL = ${paidTotals.Claudeane.brl.toFixed(4)} (expected 200)`);
-  assert(approxEq(paidTotals.Lucileide.brl, 200, 1e-6),
-    `Lucileide JÁ PAGO BRL = ${paidTotals.Lucileide.brl.toFixed(4)} (expected 200)`);
-  assert(approxEq(paidTotals.Jhemerson.brl, 100, 1e-6),
-    `Jhemerson JÁ PAGO BRL = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected 100)`);
+  assert(approxEq(paidTotals.Claudeane.brl, expectedEach, 1e-6),
+    `Claudeane JÁ PAGO BRL = ${paidTotals.Claudeane.brl.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
+  assert(approxEq(paidTotals.Lucileide.brl, expectedEach, 1e-6),
+    `Lucileide JÁ PAGO BRL = ${paidTotals.Lucileide.brl.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
+  assert(approxEq(paidTotals.Jhemerson.brl, expectedEach, 1e-6),
+    `Jhemerson JÁ PAGO BRL = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected ${expectedEach.toFixed(4)} equal split)`);
 }
 
 // ── brlSecondary display logic ────────────────────────────────────────────────

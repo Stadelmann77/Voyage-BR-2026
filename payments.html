@@ -122,37 +122,35 @@
     // ── Weighted split ──────────────────────────────────────────
     const ALL_FOUR_NAMES = ['Claudio', 'Claudeane', 'Lucileide', 'Jhemerson'];
 
-    // Jhemerson quota override by category:
-    //   flight → 1.0 (pays equal share), all other categories fall back to
-    //   the weight in people.json (currently 0.5 for Jhemerson)
-    const JHEMERSON_CATEGORY_QUOTA = { flight: 1.0 };
-
-    function getEffectiveWeight(name, isAllFour, peopleMap, category) {
-      if (name === 'Jhemerson') {
-        const override = JHEMERSON_CATEGORY_QUOTA[category];
-        if (override !== undefined) return override;
-      }
-      if (isAllFour && (name === 'Claudio' || name === 'Claudeane')) return 1.25;
-      return peopleMap[name]?.weight ?? 1.0;
+    // Rules:
+    //   - All 4 beneficiaries + flight → equal split (weight = 1 each)
+    //   - All 4 beneficiaries + non-flight → Claudio=1.25, Claudeane=1.25,
+    //       Lucileide=1.0, Jhemerson=0.5
+    //   - Subset (not all 4) → equal split regardless of category
+    function getEffectiveWeight(name, isAllFour, category) {
+      if (!isAllFour || category === 'flight') return 1.0;
+      if (name === 'Claudio' || name === 'Claudeane') return 1.25;
+      if (name === 'Jhemerson') return 0.5;
+      return 1.0; // Lucileide
     }
 
     function computeSplit(expense, peopleMap) {
       const beneficiaries = expense.beneficiaries || [];
       const category = expense.category || '';
 
-      // Special case: exactly all 4 travellers → adjust Claudio & Claudeane to 1.25
+      // Special case: exactly all 4 travellers → apply weighted split
       const bSet = new Set(beneficiaries);
       const isAllFour = bSet.size === ALL_FOUR_NAMES.length &&
         ALL_FOUR_NAMES.every(n => bSet.has(n));
 
       const totalWeight = beneficiaries.reduce(
-        (s, name) => s + getEffectiveWeight(name, isAllFour, peopleMap, category), 0);
+        (s, name) => s + getEffectiveWeight(name, isAllFour, category), 0);
       if (totalWeight === 0) return {};
 
       const amtBrl = parseBrl(expense.amount_brl);
       const shares = {};
       beneficiaries.forEach(name => {
-        const w = getEffectiveWeight(name, isAllFour, peopleMap, category);
+        const w = getEffectiveWeight(name, isAllFour, category);
         shares[name] = {
           chf: expense.amount_chf ? (expense.amount_chf * w / totalWeight) : 0,
           brl: amtBrl ? (amtBrl * w / totalWeight) : 0,
@@ -244,8 +242,10 @@
         // ── Per-person summary cards ─────────────────────────
         const BRL_ONLY_PEOPLE = new Set(['Lucileide', 'Jhemerson']);
 
-        // Format helpers
-        const fmtChf = v => (isFinite(v) ? v : 0).toLocaleString('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0CHF';
+        // Format helpers — CHF rounded to nearest 0.05 (5 centimes) for display.
+        // Multiply by 20 (= 1/0.05), round, divide back: e.g. 12.37 → 12.35.
+        const roundChf = v => Math.round((isFinite(v) ? v : 0) * 20) / 20;
+        const fmtChf = v => roundChf(v).toLocaleString('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0CHF';
         const fmtBrl = v => 'R$\u00a0' + (isFinite(v) ? v : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         // BRL secondary lines: CHF×convRate (converted) + native BRL received
         const brlSecondary = (chfAmt, brlAmt, convRate) => {

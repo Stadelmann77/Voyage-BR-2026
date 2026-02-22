@@ -175,14 +175,14 @@ const fr = {
   'payments.perPerson':        'Résumé par personne',
   'payments.expenseTable':     '📋 Détail des dépenses',
   'payments.beneficiaries':    'Bénéficiaires (quote-part)',
-  'payments.weightNote':       'La quote-part de Jhemerson est pondérée à 0.5. Quand les 4 voyageurs sont bénéficiaires (option B), Claudio et Claudeane passent à 1.25 ; sinon tous restent à 1.0.',
+  'payments.weightNote':       'Quand les 4 voyageurs sont bénéficiaires (hors vols) : Claudio et Claudeane = 1.25, Lucileide = 1.0, Jhemerson = 0.5. Pour tout autre groupe ou les vols, la dépense est répartie à parts égales.',
   'payments.rate.live':        'temps réel',
   'payments.rate.fallback':    'taux de secours',
   'payments.due':              'Part totale',
   'payments.paid':             'Déjà payé',
   'payments.remaining':        'Reste à payer',
   'payments.brl.converted':   'R$ converti',
-  'payments.brl.receipt':     'R$ reçu',
+  'payments.brl.receipt':     'R$ non converti',
   'payments.brl.total':       'R$ total',
 
   // ── Pages — Contacts ─────────────────────────────────────────

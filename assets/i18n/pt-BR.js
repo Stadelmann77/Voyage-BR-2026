@@ -175,14 +175,14 @@ const ptBR = {
   'payments.perPerson':        'Resumo por pessoa',
   'payments.expenseTable':     '📋 Detalhe das despesas',
   'payments.beneficiaries':    'Beneficiários (cota)',
-  'payments.weightNote':       'A cota de Jhemerson é ponderada em 0.5. Quando todos os 4 viajantes são beneficiários (opção B), Claudio e Claudeane passam a 1.25; caso contrário, todos ficam em 1.0.',
+  'payments.weightNote':       'Quando todos os 4 viajantes são beneficiários (exceto voos): Claudio e Claudeane = 1.25, Lucileide = 1.0, Jhemerson = 0.5. Para qualquer outro grupo ou voos, a despesa é dividida igualmente.',
   'payments.rate.live':        'tempo real',
   'payments.rate.fallback':    'taxa de reserva',
   'payments.due':              'Cota total',
   'payments.paid':             'Já pago',
   'payments.remaining':        'Ainda a pagar',
   'payments.brl.converted':   'R$ convertido',
-  'payments.brl.receipt':     'R$ recebido',
+  'payments.brl.receipt':     'R$ sem conversão',
   'payments.brl.total':       'R$ total',
 
   // ── Pages — Contacts ─────────────────────────────────────────
