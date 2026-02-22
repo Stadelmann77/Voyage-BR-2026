@@ -148,7 +148,6 @@
     "ref": "H3",
     "amount_chf": null,
     "amount_brl": 840,
-    "paid_by": "Claudio",
     "beneficiaries": [
       "Claudio",
       "Claudeane",
@@ -158,7 +157,13 @@
     "status": "⚠️ À PAYÉ 50% le 05.01.2026",
     "paid_ratio": 0.5,
     "paid_amount": 420,
-    "notes": "Réf 5331265550"
+    "notes": "Réf 5331265550",
+    "payments": [
+      {
+        "by": "Claudio",
+        "amount_brl": 420
+      }
+    ]
   },
   {
     "id": "E10",
@@ -184,6 +189,7 @@
     "ref": "H5",
     "amount_chf": null,
     "amount_brl": 861.12,
+    "paid_by": "Claudio",
     "beneficiaries": [
       "Claudio",
       "Claudeane",
@@ -191,18 +197,7 @@
       "Jhemerson"
     ],
     "status": "❌ NON PAYÉ — à payer sur place",
-    "notes": "Réf 5620.348.709",
-    "payments": [
-      {
-        "by": "Claudio"
-      },
-      {
-        "by": "Lucileide"
-      },
-      {
-        "by": "Claudeane"
-      }
-    ]
+    "notes": "Réf 5620.348.709"
   },
   {
     "id": "E12",
