@@ -63,9 +63,18 @@
     "amount_chf": null,
     "amount_brl": 1300.17,
     "payments": [
-      { "by": "Claudeane", "amount_brl": 433.39 },
-      { "by": "Lucileide", "amount_brl": 433.39 },
-      { "by": "Jhemerson", "amount_brl": 433.39 }
+      {
+        "by": "Claudeane",
+        "amount_brl": 433.39
+      },
+      {
+        "by": "Lucileide",
+        "amount_brl": 433.39
+      },
+      {
+        "by": "Jhemerson",
+        "amount_brl": 433.39
+      }
     ],
     "beneficiaries": [
       "Claudeane",
@@ -83,9 +92,18 @@
     "amount_chf": null,
     "amount_brl": 799.14,
     "payments": [
-      { "by": "Claudeane", "amount_brl": 266.38 },
-      { "by": "Lucileide", "amount_brl": 266.38 },
-      { "by": "Jhemerson", "amount_brl": 266.38 }
+      {
+        "by": "Claudeane",
+        "amount_brl": 266.38
+      },
+      {
+        "by": "Lucileide",
+        "amount_brl": 266.38
+      },
+      {
+        "by": "Jhemerson",
+        "amount_brl": 266.38
+      }
     ],
     "beneficiaries": [
       "Claudeane",
@@ -166,7 +184,6 @@
     "ref": "H5",
     "amount_chf": null,
     "amount_brl": 861.12,
-    "paid_by": "Claudio",
     "beneficiaries": [
       "Claudio",
       "Claudeane",
@@ -174,7 +191,18 @@
       "Jhemerson"
     ],
     "status": "❌ NON PAYÉ — à payer sur place",
-    "notes": "Réf 5620.348.709"
+    "notes": "Réf 5620.348.709",
+    "payments": [
+      {
+        "by": "Claudio"
+      },
+      {
+        "by": "Lucileide"
+      },
+      {
+        "by": "Claudeane"
+      }
+    ]
   },
   {
     "id": "E12",
