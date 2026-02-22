@@ -184,6 +184,15 @@ const fr = {
   'payments.brl.converted':   'R$ converti',
   'payments.brl.receipt':     'R$ non converti',
   'payments.brl.total':       'R$ total',
+  'payments.gastoTotal':      'Dépense totale',
+  'payments.totalPago':       'Total déjà payé',
+  'payments.aindaPagar':      'Encore à payer',
+  'payments.paidBy':          'Payé par',
+  'payments.modal.title':     'Détails',
+  'payments.modal.gastoTotal':'Dépense totale',
+  'payments.modal.totalPago': 'Déjà payé',
+  'payments.modal.aindaPagar':'Encore à payer',
+  'payments.modal.close':     'Fermer',
 
   // ── Pages — Contacts ─────────────────────────────────────────
   'page.contacts.title':    '📞 Contacts & Adresses',
