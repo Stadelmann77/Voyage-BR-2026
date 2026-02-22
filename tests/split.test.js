@@ -507,6 +507,45 @@ console.log('\nTest 18: paid uses fallbackRate; due/remaining use live rate');
     `receipt is rate-independent: due=${dDue.receipt?.toFixed(4)} paid=${dPaid.receipt?.toFixed(4)}`);
 }
 
+// 19. Lucileide totals with null CHF amounts (BRL-only expenses)
+// Based on real expenses.json data:
+//   E5: R$1300.17 ÷ 3 = R$433.39  (paid ✅, beneficiaries: Claudeane+Lucileide+Jhemerson)
+//   E6: R$799.14  ÷ 3 = R$266.38  (paid ✅, beneficiaries: Claudeane+Lucileide+Jhemerson)
+//   E11: R$861.12 ÷ 3 = R$287.04  (unpaid ❌, beneficiaries: Claudio+Claudeane+Lucileide)
+console.log('\nTest 19: Lucileide totals with null CHF amounts (BRL-only expenses)');
+{
+  const expenses = [
+    { id: 'E5',  amount_chf: null, amount_brl: 1300.17, status: '✅ Payé',
+      category: 'flight', beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    { id: 'E6',  amount_chf: null, amount_brl: 799.14,  status: '✅ Payé',
+      category: 'flight', beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'] },
+    { id: 'E11', amount_chf: null, amount_brl: 861.12,  status: '❌ NON PAYÉ — à payer sur place',
+      category: 'lodging', beneficiaries: ['Claudio', 'Claudeane', 'Lucileide'] },
+  ];
+  const totals     = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+
+  const expectedTotBrl  = 1300.17 / 3 + 799.14 / 3 + 861.12 / 3; // ≈ 986.81
+  const expectedPaidBrl = 1300.17 / 3 + 799.14 / 3;               // ≈ 699.77
+
+  assert(approxEq(totals.Lucileide.chf, 0, 1e-9),
+    `Lucileide tot.chf = ${totals.Lucileide.chf} (expected 0, all expenses are BRL-only)`);
+  assert(approxEq(totals.Lucileide.brl, expectedTotBrl, 1e-4),
+    `Lucileide tot.brl = ${totals.Lucileide.brl.toFixed(4)} (expected ${expectedTotBrl.toFixed(4)} ≈ 986.81)`);
+  assert(approxEq(paidTotals.Lucileide.chf, 0, 1e-9),
+    `Lucileide paid.chf = ${paidTotals.Lucileide.chf} (expected 0)`);
+  assert(approxEq(paidTotals.Lucileide.brl, expectedPaidBrl, 1e-4),
+    `Lucileide paid.brl = ${paidTotals.Lucileide.brl.toFixed(4)} (expected ${expectedPaidBrl.toFixed(4)} ≈ 699.77)`);
+
+  // remaining = (tot.brl - paid.brl) + (tot.chf - paid.chf) * rate (same formula as Fix 1)
+  const rate = 6.5; // any rate — CHF portion is 0 so result is rate-independent
+  const remainingBrl = (totals.Lucileide.brl - paidTotals.Lucileide.brl) +
+                       (totals.Lucileide.chf - paidTotals.Lucileide.chf) * rate;
+  const expectedRem  = 861.12 / 3; // ≈ 287.04
+  assert(approxEq(remainingBrl, expectedRem, 1e-4),
+    `Lucileide remaining.brl = ${remainingBrl.toFixed(4)} (expected ${expectedRem.toFixed(4)} ≈ 287.04)`);
+}
+
 // ── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${passed + failed} test(s): ${passed} passed, ${failed} failed.\n`);
 if (failed > 0) process.exit(1);

@@ -9,7 +9,7 @@ const _cache = {};
 
 async function loadJson(name) {
   if (_cache[name]) return _cache[name];
-  const res = await fetch(`data/${name}.json`);
+  const res = await fetch(`data/${name}.json`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to load data/${name}.json: ${res.status}`);
   const data = await res.json();
   _cache[name] = data;
@@ -104,7 +104,7 @@ export async function fetchContent(lang, section) {
   const safeSection = validSections.includes(section) ? section : 'baggage';
   const key = `${safeLang}/content/${safeSection}`;
   if (_cache[key]) return _cache[key];
-  const res = await fetch(`data/${key}.json`);
+  const res = await fetch(`data/${key}.json`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to load data/${key}.json: ${res.status}`);
   const data = await res.json();
   _cache[key] = data;

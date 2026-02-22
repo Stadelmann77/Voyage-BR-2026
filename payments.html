@@ -283,7 +283,7 @@
             // to be consistent with the rule applied to Claudio/Claudeane.
             const totalBrl  = tot.brl  + tot.chf  * rate;
             const paidBrl   = paid.brl + paid.chf  * fallbackRate;
-            const remainingBrl = totalBrl - paidBrl;
+            const remainingBrl = (tot.brl - paid.brl) + (tot.chf - paid.chf) * rate;
             html += `<div class="summary-card">
               <h3>👤 ${escHtml(p.name)}</h3>
               <div class="summary-row">
