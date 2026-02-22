@@ -167,7 +167,9 @@ console.log('\nTest 3: {Claudio, Lucileide, Jhemerson} → equal split (not all 
 function getEffectivePaidRatio(exp) {
   if ((exp.status || '').startsWith('✅')) return 1;
   if (exp.payments) {
-    const paidSum = exp.payments.reduce((s, p) => s + (p.amount_brl || 0) + (p.amount_chf || 0), 0);
+    const isBrl = exp.amount_brl != null;
+    const paidSum = exp.payments.reduce(
+      (s, p) => s + (isBrl ? (p.amount_brl || 0) : (p.amount_chf || 0)), 0);
     const total = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
     if (total > 0) return Math.min(1, Math.max(0, paidSum / total));
   }

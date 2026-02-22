@@ -181,7 +181,10 @@
     function getEffectivePaidRatio(exp) {
       if ((exp.status || '').startsWith('✅')) return 1;
       if (exp.payments) {
-        const paidSum = exp.payments.reduce((s, p) => s + (p.amount_brl || 0) + (p.amount_chf || 0), 0);
+        // Sum only the currency that matches the expense total (BRL or CHF are mutually exclusive)
+        const isBrl = exp.amount_brl != null;
+        const paidSum = exp.payments.reduce(
+          (s, p) => s + (isBrl ? (p.amount_brl || 0) : (p.amount_chf || 0)), 0);
         const total = parseBrl(exp.amount_brl) || exp.amount_chf || 0;
         if (total > 0) return Math.min(1, Math.max(0, paidSum / total));
       }
@@ -486,7 +489,7 @@
 
         document.querySelectorAll('.summary-card[data-person]').forEach(card => {
           card.addEventListener('click', () => openModal(card.dataset.person));
-          card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openModal(card.dataset.person); });
+          card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(card.dataset.person); } });
         });
         closeBtn.addEventListener('click', closeModal);
         overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
