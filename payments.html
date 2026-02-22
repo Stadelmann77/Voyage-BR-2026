@@ -208,17 +208,69 @@
         let html = '';
 
         // ── Per-person summary cards ─────────────────────────
+        const BRL_ONLY_PEOPLE = new Set(['Lucileide', 'Jhemerson']);
+
+        // Format helpers
+        const fmtChf = v => (isFinite(v) ? v : 0).toLocaleString('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0CHF';
+        const fmtBrl = v => 'R$\u00a0' + (isFinite(v) ? v : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        // BRL secondary in parentheses: CHF×convRate + BRL
+        const brlSecondary = (chfAmt, brlAmt, convRate) => {
+          const total = chfAmt * convRate + brlAmt;
+          return ` <span class="amount-secondary">(${fmtBrl(total)})</span>`;
+        };
+
         html += `<h2 style="margin-bottom:.75rem">👥 ${t('payments.perPerson')}</h2>
           <div class="payment-summary-grid">`;
         people.forEach(p => {
-          const tot = personTotals[p.name] || { chf: 0, brl: 0 };
-          const equiv = tot.chf + tot.brl / rate;
-          html += `<div class="summary-card">
-            <h3>👤 ${escHtml(p.name)} <small style="font-weight:400;opacity:.7">×${p.weight}</small></h3>
-            <div class="amount-chf">${tot.chf > 0.01 ? tot.chf.toLocaleString('fr-CH', { maximumFractionDigits: 2 }) + ' CHF' : '—'}</div>
-            ${tot.brl > 0.01 ? `<div class="amount-brl">R$ ${tot.brl.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</div>` : ''}
-            ${tot.brl > 0.01 ? `<div class="amount-brl">≈ ${equiv.toLocaleString('fr-CH', { maximumFractionDigits: 2 })} CHF equiv.</div>` : ''}
-          </div>`;
+          const tot  = personTotals[p.name] || { chf: 0, brl: 0 };
+          const paid = paidTotals[p.name]   || { chf: 0, brl: 0 };
+          const remainChf = tot.chf - paid.chf;
+          const remainBrl = tot.brl - paid.brl;
+
+          if (BRL_ONLY_PEOPLE.has(p.name)) {
+            // All values in BRL only; convert any CHF portion to BRL.
+            // "total" uses live rate; "paid" uses frozen fallback rate (taux figé).
+            // Since these people have paid.chf = 0 in the current data, the
+            // remainingBrl = totalBrl(live) - paidBrl(frozen) is numerically equivalent
+            // to remainingBrl = totalBrl - paidBrl(live), but we keep frozen for "paid"
+            // to be consistent with the rule applied to Claudio/Claudeane.
+            const totalBrl  = tot.brl  + tot.chf  * rate;
+            const paidBrl   = paid.brl + paid.chf  * fallbackRate;
+            const remainingBrl = totalBrl - paidBrl;
+            html += `<div class="summary-card">
+              <h3>👤 ${escHtml(p.name)}</h3>
+              <div class="summary-row">
+                <span class="summary-label">${t('payments.due')}</span>
+                <span class="amount-primary">${fmtBrl(totalBrl)}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">${t('payments.paid')}</span>
+                <span class="amount-primary">${fmtBrl(paidBrl)}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">${t('payments.remaining')}</span>
+                <span class="amount-primary">${fmtBrl(remainingBrl)}</span>
+              </div>
+            </div>`;
+          } else {
+            // CHF primary + BRL secondary
+            // "due" and "remaining" use current live rate; "paid" uses frozen fallback rate
+            html += `<div class="summary-card">
+              <h3>👤 ${escHtml(p.name)} <small style="font-weight:400;opacity:.7">×${p.weight}</small></h3>
+              <div class="summary-row">
+                <span class="summary-label">${t('payments.due')}</span>
+                <span class="amount-primary">${fmtChf(tot.chf)}</span>${brlSecondary(tot.chf, tot.brl, rate)}
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">${t('payments.paid')}</span>
+                <span class="amount-primary">${fmtChf(paid.chf)}</span>${brlSecondary(paid.chf, paid.brl, fallbackRate)}
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">${t('payments.remaining')}</span>
+                <span class="amount-primary">${fmtChf(remainChf)}</span>${brlSecondary(remainChf, remainBrl, rate)}
+              </div>
+            </div>`;
+          }
         });
         html += `</div>`;
 
