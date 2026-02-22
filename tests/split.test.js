@@ -362,12 +362,16 @@ console.log('\nTest 12: paid_amount only → derives paid ratio');
     `paid_amount derives ratio: Claudio JÁ PAGO BRL = ${paidTotals.Claudio.brl.toFixed(4)} (expected 300)`);
 }
 
-// 13. getEffectivePaidRatio: ✅ status always returns 1 regardless of paid_ratio
-console.log('\nTest 13: ✅ status → ratio=1 regardless of paid_ratio');
+// 13. getEffectivePaidRatio: ✅ status always returns 1 regardless of paid_ratio or paid_amount
+console.log('\nTest 13: ✅ status → ratio=1 regardless of paid_ratio or paid_amount');
 {
-  const exp = { amount_brl: 1000, status: '✅ Payé', paid_ratio: 0.3 };
-  assert(approxEq(getEffectivePaidRatio(exp), 1),
-    `✅ status → ratio = ${getEffectivePaidRatio(exp)} (expected 1)`);
+  const expWithRatio = { amount_brl: 1000, status: '✅ Payé', paid_ratio: 0.3 };
+  assert(approxEq(getEffectivePaidRatio(expWithRatio), 1),
+    `✅ status with paid_ratio → ratio = ${getEffectivePaidRatio(expWithRatio)} (expected 1)`);
+
+  const expWithAmount = { amount_brl: 1000, status: '✅ Payé', paid_amount: 400 };
+  assert(approxEq(getEffectivePaidRatio(expWithAmount), 1),
+    `✅ status with paid_amount → ratio = ${getEffectivePaidRatio(expWithAmount)} (expected 1, not 0.4)`);
 }
 
 // 14. Partial payment with multiple beneficiaries

@@ -406,6 +406,9 @@ async function loadPaymentsAdmin(body) {
     </table></div>
     <div id="expenses-save-msg" style="margin-top:.75rem"></div>`;
 
+  // Helper: round a currency amount to 2 decimal places
+  function roundCurrency(v) { return Math.round(v * 100) / 100; }
+
   // Auto-update: Paid % ↔ Paid amount
   body.addEventListener('input', e => {
     const inp = e.target;
@@ -419,7 +422,7 @@ async function loadPaymentsAdmin(body) {
       if (!isNaN(pct) && amount > 0) {
         const ratio = Math.min(1, Math.max(0, pct / 100));
         const amtInp = body.querySelector(`input[data-exp="${exp.id}"][data-field="paid_amount"]`);
-        if (amtInp) amtInp.value = Math.round(amount * ratio * 100) / 100;
+        if (amtInp) amtInp.value = roundCurrency(amount * ratio);
       }
     } else if (inp.dataset.field === 'paid_amount') {
       const paidAmt = parseFloat(inp.value);
@@ -460,7 +463,7 @@ async function loadPaymentsAdmin(body) {
           expenses[idx].paid_ratio = ratio;
           const amount = parseBrl(expenses[idx].amount_brl) || expenses[idx].amount_chf || 0;
           if (amount > 0) {
-            expenses[idx].paid_amount = Math.round(amount * ratio * 100) / 100;
+            expenses[idx].paid_amount = roundCurrency(amount * ratio);
           } else {
             delete expenses[idx].paid_amount;
           }
