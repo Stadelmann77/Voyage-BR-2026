@@ -178,6 +178,9 @@ const fr = {
   'payments.weightNote':       'La quote-part de Jhemerson est pondérée à 0.5. Quand les 4 voyageurs sont bénéficiaires (option B), Claudio et Claudeane passent à 1.25 ; sinon tous restent à 1.0.',
   'payments.rate.live':        'temps réel',
   'payments.rate.fallback':    'taux de secours',
+  'payments.due':              'Part totale',
+  'payments.paid':             'Déjà payé',
+  'payments.remaining':        'Reste à payer',
 
   // ── Pages — Contacts ─────────────────────────────────────────
   'page.contacts.title':    '📞 Contacts & Adresses',

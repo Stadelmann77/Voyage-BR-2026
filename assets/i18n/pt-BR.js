@@ -178,6 +178,9 @@ const ptBR = {
   'payments.weightNote':       'A cota de Jhemerson é ponderada em 0.5. Quando todos os 4 viajantes são beneficiários (opção B), Claudio e Claudeane passam a 1.25; caso contrário, todos ficam em 1.0.',
   'payments.rate.live':        'tempo real',
   'payments.rate.fallback':    'taxa de reserva',
+  'payments.due':              'Cota total',
+  'payments.paid':             'Já pago',
+  'payments.remaining':        'Ainda a pagar',
 
   // ── Pages — Contacts ─────────────────────────────────────────
   'page.contacts.title':    '📞 Contatos & Endereços',
