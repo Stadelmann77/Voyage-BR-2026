@@ -101,6 +101,19 @@ export function statusBadge(text) {
   return `<span class="status ${cls}">${escHtml(text)}</span>`;
 }
 
+// ── Parse BRL amount (handles pt-BR format "3.182,30" → 3182.30) ──
+export function parseBrl(val) {
+  if (val == null) return null;
+  if (typeof val === 'number') return val;
+  const s = String(val).trim();
+  // pt-BR format: dots as thousands separators, comma as decimal separator
+  if (s.includes(',')) {
+    return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+  }
+  // Standard float string (no commas): parse as-is
+  return parseFloat(s);
+}
+
 // ── Escape HTML ─────────────────────────────────────────────
 export function escHtml(s) {
   if (s == null) return '';
