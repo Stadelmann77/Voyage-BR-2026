@@ -1,10 +1,20 @@
 // assets/public.js
-// Shared helpers for all public pages: loading data from Supabase (online)
-// or CSV (offline) and rendering utilities.
+// Shared helpers for all public pages: loading data from JSON files
+// stored in data/ directory.
 
-import { supabase, configOk } from './supabaseClient.js';
-import { loadCsvData, DEFAULT_CHECKLIST } from './csvData.js';
 import { t } from './i18n.js';
+
+// ── JSON data cache ─────────────────────────────────────────
+const _cache = {};
+
+async function loadJson(name) {
+  if (_cache[name]) return _cache[name];
+  const res = await fetch(`data/${name}.json`);
+  if (!res.ok) throw new Error(`Failed to load data/${name}.json: ${res.status}`);
+  const data = await res.json();
+  _cache[name] = data;
+  return data;
+}
 
 // ── Navigation active link ──────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,33 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-links a').forEach(a => {
     if (a.getAttribute('href') === path) a.classList.add('active');
   });
-
-  // Show offline mode banner if Supabase is not configured
-  if (!configOk) {
-    showOfflineBanner();
-  }
 });
-
-// ── Offline mode banner ─────────────────────────────────────
-export function showOfflineBanner() {
-  if (document.getElementById('offline-mode-banner')) return; // already shown
-  const main = document.querySelector('main');
-  if (!main) return;
-
-  const banner = document.createElement('div');
-  banner.id = 'offline-mode-banner';
-  banner.className = 'offline-mode-banner';
-  banner.innerHTML = `
-    <strong data-i18n="offline.banner.title">${t('offline.banner.title')}</strong>
-    <p data-i18n="offline.banner.msg">${t('offline.banner.msg')}</p>
-    <p><small data-i18n="offline.banner.hint">${t('offline.banner.hint')}</small></p>`;
-  main.insertBefore(banner, main.firstChild);
-}
-
-// ── Config error banner (kept for backwards compatibility) ──
-export function showConfigBanner() {
-  showOfflineBanner();
-}
 
 // ── Generic error display ───────────────────────────────────
 export function showError(container, msg, detail = null) {
@@ -67,83 +51,37 @@ export function showLoading(container) {
   container.innerHTML = '<div class="loading-center"><div class="spinner"></div></div>';
 }
 
-// ── Fetch helpers ───────────────────────────────────────────
+// ── Fetch helpers (from JSON files) ─────────────────────────
 export async function fetchFlights(surpriseUnlocked = false) {
-  if (!configOk) {
-    const csv = await loadCsvData();
-    return csv.flights.filter(f => !f.is_surprise);
-  }
-  let query = supabase
-    .from('flights')
-    .select('*, origin:airports!origin_iata(iata,city,lat,lon), destination:airports!destination_iata(iata,city,lat,lon)')
-    .order('dep_date');
-  if (!surpriseUnlocked) query = query.eq('is_surprise', false);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  const flights = await loadJson('flights');
+  return surpriseUnlocked ? flights : flights.filter(f => !f.is_surprise);
 }
 
 export async function fetchLodgings(surpriseUnlocked = false) {
-  if (!configOk) {
-    const csv = await loadCsvData();
-    return csv.lodgings.filter(l => !l.is_surprise);
-  }
-  let query = supabase.from('lodgings').select('*').order('checkin_date');
-  if (!surpriseUnlocked) query = query.eq('is_surprise', false);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  const lodgings = await loadJson('lodgings');
+  return surpriseUnlocked ? lodgings : lodgings.filter(l => !l.is_surprise);
 }
 
 export async function fetchTransport() {
-  if (!configOk) {
-    const csv = await loadCsvData();
-    return csv.transport;
-  }
-  const { data, error } = await supabase.from('transport').select('*').order('start_date');
-  if (error) throw error;
-  return data;
+  return loadJson('transport');
 }
 
 export async function fetchContacts() {
-  if (!configOk) {
-    const csv = await loadCsvData();
-    return csv.contacts;
-  }
-  const { data, error } = await supabase.from('contacts').select('*').order('id');
-  if (error) throw error;
-  return data;
+  return loadJson('contacts');
 }
 
 export async function fetchTravellers() {
-  if (!configOk) {
-    const csv = await loadCsvData();
-    return csv.travellers;
-  }
-  const { data, error } = await supabase.from('travellers').select('*').order('id');
-  if (error) throw error;
-  return data;
+  return loadJson('travellers');
 }
 
 export async function fetchPayments() {
-  if (!configOk) return [];
-  const { data, error } = await supabase
-    .from('participants_payments')
-    .select('*, traveller:travellers(id,name)')
-    .order('traveller_id');
-  if (error) throw error;
-  return data;
+  // Payments are not yet in JSON — return empty array
+  return [];
 }
 
 export async function fetchChecklist(surpriseUnlocked = false) {
-  if (!configOk) {
-    return DEFAULT_CHECKLIST.filter(i => !i.is_surprise);
-  }
-  let query = supabase.from('checklist_items').select('*').order('category').order('id');
-  if (!surpriseUnlocked) query = query.eq('is_surprise', false);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  const items = await loadJson('checklist');
+  return surpriseUnlocked ? items : items.filter(i => !i.is_surprise);
 }
 
 // ── Status badge helper ─────────────────────────────────────

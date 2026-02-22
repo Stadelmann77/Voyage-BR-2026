@@ -1,0 +1,6 @@
+[
+  { "id": "P1", "name": "Claudeane",  "role": "Épouse (brésilienne)",  "trip_start": "2026-04-27", "trip_end": "2026-06-06", "return_by": "✈️ Avion" },
+  { "id": "P2", "name": "Claudio",    "role": "Voyageur principal",    "trip_start": "2026-05-23", "trip_end": "2026-06-06", "return_by": "✈️ Avion" },
+  { "id": "P3", "name": "Lucileide",  "role": "Sœur de Claudeane",    "trip_start": "2026-05-25", "trip_end": null,         "return_by": "🚌 Bus" },
+  { "id": "P4", "name": "Jhemerson",  "role": "Neveu",                 "trip_start": "2026-05-25", "trip_end": null,         "return_by": "🚌 Bus" }
+]

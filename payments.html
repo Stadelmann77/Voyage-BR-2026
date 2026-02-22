@@ -44,157 +44,111 @@
   </main>
 
   <footer>
-    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> JSON</p>
   </footer>
 
-  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module">
-    import { fetchPayments, fetchTravellers, showError, showLoading, escHtml, statusBadge } from './assets/public.js';
-    import { supabase, configOk } from './assets/supabaseClient.js';
+    import { fetchFlights, fetchLodgings, fetchTransport, fetchTravellers, showLoading, escHtml, fmtAmt, statusBadge } from './assets/public.js';
     import { t } from './assets/i18n.js';
 
     async function loadPayments() {
       const container = document.getElementById('payments-container');
       showLoading(container);
 
-      // Offline mode: show informational message
-      if (!configOk) {
-        container.innerHTML = `<div class="alert alert-info" data-i18n="offline.payments.msg">${t('offline.payments.msg')}</div>`;
-        return;
-      }
-
       try {
-        const [payments, travellers, { data: params }] = await Promise.all([
-          fetchPayments(),
+        const [flights, lodgings, transport, travellers, paramsRes] = await Promise.all([
+          fetchFlights(),
+          fetchLodgings(),
+          fetchTransport(),
           fetchTravellers(),
-          supabase.from('parameters').select('key,value'),
+          fetch('data/parameters.json').then(r => r.json()),
         ]);
 
-        // Update exchange rate display
-        const rate = params?.find(p => p.key === 'chf_brl_rate')?.value;
-        if (rate) document.getElementById('rate-value').textContent = rate;
+        const rate = parseFloat(paramsRes.find(p => p.key === 'chf_brl_rate')?.value || '6.7');
+        document.getElementById('rate-value').textContent = rate;
 
-        renderPayments(payments, travellers, container);
-      } catch (err) {
-        showError(container, err.message, err.stack);
-      }
-    }
+        // Build payment summary from flights, lodgings, transport
+        let grandTotalChf = 0, grandTotalBrl = 0;
+        let html = '';
 
-    function renderPayments(payments, travellers, container) {
-      if (!payments || !travellers) {
-        container.innerHTML = `<div class="alert alert-info">${t('payments.noData')}</div>`;
-        return;
-      }
+        travellers.forEach(tv => {
+          const name = tv.name;
+          const lines = [];
 
-      // Group payments by traveller
-      const byTraveller = {};
-      payments.forEach(p => {
-        const tid = p.traveller_id;
-        if (!byTraveller[tid]) byTraveller[tid] = [];
-        byTraveller[tid].push(p);
-      });
+          // Flights for this traveller
+          flights.filter(f => f.passengers.includes(name)).forEach(f => {
+            lines.push({ cat: 'Vol', detail: f.route, chf: f.price_chf, brl: f.price_brl, status: f.payment_status });
+          });
 
-      let html = '';
+          // Lodgings for this traveller
+          lodgings.filter(l => l.travellers_desc.includes(name)).forEach(l => {
+            lines.push({ cat: 'Hébergement', detail: `${l.establishment} (${l.city})`, chf: l.price_chf, brl: l.price_brl, status: l.prepayment });
+          });
 
-      travellers.forEach(tv => {
-        const tPayments = byTraveller[tv.id] || [];
-        if (tPayments.length === 0) return;
+          // Transport
+          transport.filter(t => t.driver.includes(name)).forEach(t => {
+            lines.push({ cat: 'Transport', detail: `${t.vehicle} — ${t.agency}`, chf: null, brl: t.price_brl, status: t.payment_status });
+          });
 
-        const totalChf = tPayments.reduce((s, p) => s + (p.price_chf || 0), 0);
-        const totalBrl = tPayments.reduce((s, p) => s + (p.price_brl || 0), 0);
-        const paidChf = tPayments.filter(p => p.paid?.includes('✅')).reduce((s, p) => s + (p.price_chf || 0), 0);
+          if (lines.length === 0) return;
+
+          const totalChf = lines.reduce((s, l) => s + (l.chf || 0), 0);
+          const totalBrl = lines.reduce((s, l) => s + (l.brl || 0), 0);
+          grandTotalChf += totalChf;
+          grandTotalBrl += totalBrl;
+
+          html += `
+            <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem">
+              <div class="payment-person-header">
+                <span>👤 ${escHtml(name)} <span style="font-weight:400;opacity:.8">— ${escHtml(tv.role)}</span></span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Catégorie</th><th>Détail</th><th>CHF</th><th>BRL</th><th>Statut</th></tr></thead>
+                  <tbody>
+                    ${lines.map(l => `<tr>
+                      <td><strong>${escHtml(l.cat)}</strong></td>
+                      <td>${escHtml(l.detail)}</td>
+                      <td>${l.chf ? Number(l.chf).toLocaleString('fr-CH') : '—'}</td>
+                      <td>${l.brl ? 'R$ ' + Number(l.brl).toLocaleString('pt-BR') : '—'}</td>
+                      <td>${statusBadge(l.status || '—')}</td>
+                    </tr>`).join('')}
+                    <tr class="payment-total-row">
+                      <td colspan="2"><strong>TOTAL ${escHtml(name).toUpperCase()}</strong></td>
+                      <td><strong>${totalChf ? totalChf.toLocaleString('fr-CH') + ' CHF' : '—'}</strong></td>
+                      <td><strong>${totalBrl ? 'R$ ' + totalBrl.toLocaleString('pt-BR') : '—'}</strong></td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>`;
+        });
+
+        // Grand total
+        const brlInChf = grandTotalBrl / rate;
+        const grandTotal = grandTotalChf + brlInChf;
 
         html += `
-          <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem">
-            <div class="payment-person-header">
-              <span>👤 ${escHtml(tv.name)} <span style="font-weight:400;opacity:.8">— ${escHtml(tv.role)}</span></span>
-              <span style="font-size:.85rem">
-                ${t('payments.total.label')} ${totalChf > 0 ? '<strong>' + totalChf.toLocaleString('fr-CH') + ' CHF</strong>' : ''}
-                ${totalBrl > 0 ? ' + R$ ' + totalBrl.toLocaleString('pt-BR') : ''}
-              </span>
-            </div>
+          <div class="card" style="border:2px solid var(--primary)">
+            <h2>💰 Total général</h2>
             <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>${t('th.payment.category')}</th>
-                    <th>${t('th.payment.detail')}</th>
-                    <th>${t('th.payment.chf')}</th>
-                    <th>${t('th.payment.brl')}</th>
-                    <th>${t('th.payment.status')}</th>
-                    <th>${t('th.payment.notes')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${tPayments.map(p => `<tr>
-                    <td><strong>${escHtml(p.category)}</strong></td>
-                    <td>${escHtml(p.detail)}</td>
-                    <td>${p.price_chf != null ? Number(p.price_chf).toLocaleString('fr-CH') : '—'}</td>
-                    <td>${p.price_brl != null ? 'R$ ' + Number(p.price_brl).toLocaleString('pt-BR') : '—'}</td>
-                    <td>${statusBadge(p.paid || '—')}</td>
-                    <td><small style="color:var(--text-light)">${escHtml(p.notes || '')}</small></td>
-                  </tr>`).join('')}
-                  <tr class="payment-total-row">
-                    <td colspan="2"><strong>${t('payments.subtotal')} ${escHtml(tv.name).toUpperCase()}</strong></td>
-                    <td><strong>${totalChf > 0 ? totalChf.toLocaleString('fr-CH') + ' CHF' : '—'}</strong></td>
-                    <td><strong>${totalBrl > 0 ? 'R$ ' + totalBrl.toLocaleString('pt-BR') : '—'}</strong></td>
-                    <td colspan="2"><small style="color:var(--success)">${t('payments.paidChf')} ${paidChf.toLocaleString('fr-CH')}</small></td>
-                  </tr>
-                </tbody>
-              </table>
+              <table><tbody>
+                <tr><td style="font-weight:600">Total CHF</td><td><strong>${grandTotalChf.toLocaleString('fr-CH')} CHF</strong></td></tr>
+                <tr><td style="font-weight:600">Total BRL</td><td>R$ ${grandTotalBrl.toLocaleString('pt-BR')}</td></tr>
+                <tr><td style="font-weight:600">BRL → CHF (taux ${rate})</td><td>${brlInChf.toLocaleString('fr-CH', { maximumFractionDigits: 2 })} CHF</td></tr>
+                <tr style="background:#EFF6FF"><td style="font-weight:700;color:var(--primary)">GRAND TOTAL</td><td style="font-weight:700;font-size:1.1rem;color:var(--primary)">${grandTotal.toLocaleString('fr-CH', { maximumFractionDigits: 2 })} CHF</td></tr>
+              </tbody></table>
             </div>
           </div>`;
-      });
 
-      // Grand total
-      const grandTotalChf = payments.reduce((s, p) => s + (p.price_chf || 0), 0);
-      const grandTotalBrl = payments.reduce((s, p) => s + (p.price_brl || 0), 0);
-      const rateEl = document.getElementById('rate-value');
-      const rate = parseFloat(rateEl?.textContent || '6.7');
-      const brlInChf = grandTotalBrl / rate;
-      const grandTotal = grandTotalChf + brlInChf;
-
-      html += `
-        <div class="card" style="border:2px solid var(--primary)">
-          <h2>${t('payments.grandTotal')}</h2>
-          <div class="table-wrap">
-            <table>
-              <tbody>
-                <tr>
-                  <td style="font-weight:600">${t('payments.totalChf')}</td>
-                  <td><strong>${grandTotalChf.toLocaleString('fr-CH')} CHF</strong></td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600">${t('payments.totalBrl')}</td>
-                  <td>R$ ${grandTotalBrl.toLocaleString('pt-BR')}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:600">${t('payments.brlToChf.prefix')} ${rate} ${t('payments.brlToChf.suffix')}</td>
-                  <td>${brlInChf.toLocaleString('fr-CH', { maximumFractionDigits: 2 })} CHF</td>
-                </tr>
-                <tr style="background:#EFF6FF">
-                  <td style="font-weight:700;color:var(--primary)">${t('payments.grandTotal')}</td>
-                  <td style="font-weight:700;font-size:1.1rem;color:var(--primary)">${grandTotal.toLocaleString('fr-CH', { maximumFractionDigits: 2 })} CHF</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-
-      container.innerHTML = html;
+        container.innerHTML = html;
+      } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">⚠️ ${escHtml(err.message)}</div>`;
+      }
     }
 
     loadPayments();
-
-    document.addEventListener('langchange', () => {
-      const c = document.getElementById('payments-container');
-      if (c && !c.querySelector('.alert')) loadPayments();
-      // In offline mode, re-translate the static offline message
-      if (!configOk && c) {
-        const msg = c.querySelector('[data-i18n="offline.payments.msg"]');
-        if (msg) msg.innerHTML = t('offline.payments.msg');
-      }
-    });
   </script>
 </body>
 </html>

@@ -257,28 +257,34 @@ main {
 }
 
 /* ── Tables ───────────────────────────────────────────────── */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: .9rem;
+  font-size: .85rem;
+  min-width: 900px;
 }
 
 th {
   background: var(--primary);
   color: #fff;
   text-align: left;
-  padding: .65rem .9rem;
+  padding: .55rem .7rem;
   font-weight: 600;
   white-space: nowrap;
+  font-size: .8rem;
 }
 
 td {
-  padding: .6rem .9rem;
+  padding: .5rem .7rem;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
+
+/* Allow key columns to wrap */
+td:nth-child(3) { min-width: 160px; }  /* Route / Company */
+td:nth-child(2) { min-width: 100px; }  /* Passengers */
 
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: #F0F4FA; }
@@ -325,34 +331,36 @@ tr:hover td { background: #F0F4FA; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.65);
+  background: rgba(0,0,0,.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .modal-overlay.hidden { display: none; }
 
 .modal-box {
-  background: #0A0F1E;
-  border-radius: 14px;
+  background: #0d1117;
+  border-radius: 16px;
   width: 100%;
-  max-width: 860px;
+  max-width: 720px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  box-shadow: 0 25px 80px rgba(0,0,0,.6);
   position: relative;
+  border: 1px solid rgba(255,255,255,.08);
 }
 
 .modal-header {
   background: var(--primary);
   color: #fff;
-  padding: 1rem 1.25rem;
+  padding: .85rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
+  font-size: .95rem;
 }
 
 .modal-close {
@@ -362,36 +370,89 @@ tr:hover td { background: #F0F4FA; }
   font-size: 1.4rem;
   cursor: pointer;
   line-height: 1;
-  padding: 0 .25rem;
+  padding: .25rem;
+  border-radius: 6px;
+  transition: background .15s;
 }
+.modal-close:hover { background: rgba(255,255,255,.15); }
 
 #globe-container {
   width: 100%;
-  height: 480px;
-  background: #0A0F1E;
+  height: 420px;
+  background: #0d1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
+
+/* Force globe.gl canvas to center */
+#globe-container > div { margin: 0 auto; }
 
 .modal-footer {
-  padding: 1rem 1.25rem;
-  background: #111827;
+  padding: .85rem 1.25rem;
+  background: #161b22;
   color: #CBD5E1;
-  font-size: .85rem;
+  font-size: .82rem;
+  border-top: 1px solid rgba(255,255,255,.06);
 }
 
-.modal-footer dl { display: grid; grid-template-columns: auto 1fr; gap: .3rem .75rem; }
-.modal-footer dt { color: #94A3B8; font-weight: 600; }
+.modal-footer dl { display: grid; grid-template-columns: auto 1fr; gap: .25rem .75rem; }
+.modal-footer dt { color: #8b949e; font-weight: 600; }
 
 /* ── Surprise Section ─────────────────────────────────────── */
-.surprise-banner {
-  background: linear-gradient(135deg, #FF6B9D, #C34B99);
-  color: #fff;
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
+/* Subtle trigger in footer */
+.surprise-trigger {
+  cursor: pointer;
+  font-size: .7rem;
+  opacity: .25;
+  transition: opacity .3s;
+  display: inline-block;
+  margin-top: .25rem;
+  user-select: none;
 }
+.surprise-trigger:hover { opacity: .6; }
 
-.surprise-banner h2 { font-size: 1.3rem; margin-bottom: .75rem; }
+/* Full-screen overlay dialog */
+.surprise-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+.surprise-overlay.hidden { display: none; }
+
+.surprise-dialog {
+  background: #1a1f2e;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  position: relative;
+}
+.surprise-dialog h3 { font-size: 1.15rem; margin-bottom: .25rem; }
+
+.surprise-dialog-close {
+  position: absolute;
+  top: .75rem;
+  right: .75rem;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.5);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: .25rem;
+}
+.surprise-dialog-close:hover { color: #fff; }
 
 .pin-form {
   display: flex;
@@ -403,16 +464,16 @@ tr:hover td { background: #F0F4FA; }
 .pin-input {
   padding: .55rem .9rem;
   border-radius: 7px;
-  border: 2px solid rgba(255,255,255,.4);
-  background: rgba(255,255,255,.15);
+  border: 1.5px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
   color: #fff;
   font-size: 1rem;
   width: 130px;
   text-align: center;
   letter-spacing: .15em;
 }
-
-.pin-input::placeholder { color: rgba(255,255,255,.6); }
+.pin-input:focus { outline: none; border-color: var(--accent); }
+.pin-input::placeholder { color: rgba(255,255,255,.35); }
 
 .surprise-content { display: none; }
 .surprise-content.visible { display: block; }

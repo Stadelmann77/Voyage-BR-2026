@@ -37,15 +37,18 @@
       <p data-i18n="page.flights.subtitle">7 vols planifiés — cliquez sur 🌍 Globe pour visualiser la route en 3D.</p>
     </div>
 
-    <!-- Surprise PIN section -->
-    <div class="surprise-banner" id="surprise-banner">
-      <h2 data-i18n="flights.surprise.title">⭐ Section Surprise</h2>
-      <p data-i18n="flights.surprise.hint">Entrez le PIN pour déverrouiller les éléments cachés.</p>
-      <form class="pin-form" id="surprise-pin-form">
-        <input type="password" class="pin-input" id="surprise-pin-input" placeholder="PIN" maxlength="20" autocomplete="off">
-        <button type="submit" class="btn btn-accent" data-i18n="flights.surprise.btn">Déverrouiller</button>
-      </form>
-      <div id="surprise-pin-error" style="margin-top:.5rem;font-size:.85rem"></div>
+    <!-- Surprise PIN (hidden by default — activated via footer link) -->
+    <div class="surprise-overlay hidden" id="surprise-overlay">
+      <div class="surprise-dialog">
+        <button class="surprise-dialog-close" id="surprise-close" aria-label="Fermer">✕</button>
+        <h3>🔒 Accès restreint</h3>
+        <p style="color:#94A3B8;font-size:.88rem;margin:.5rem 0 1rem" data-i18n="flights.surprise.hint">Entrez le PIN pour déverrouiller les éléments cachés.</p>
+        <form class="pin-form" id="surprise-pin-form">
+          <input type="password" class="pin-input" id="surprise-pin-input" placeholder="PIN" maxlength="20" autocomplete="off">
+          <button type="submit" class="btn btn-accent" data-i18n="flights.surprise.btn">Déverrouiller</button>
+        </form>
+        <div id="surprise-pin-error" style="margin-top:.5rem;font-size:.85rem;color:#f87171"></div>
+      </div>
     </div>
 
     <div id="surprise-content" class="surprise-content">
@@ -93,10 +96,10 @@
   </div>
 
   <footer>
-    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> JSON</p>
+    <span class="surprise-trigger" id="surprise-trigger" title="⭐">⭐</span>
   </footer>
 
-  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module" src="assets/flights.js"></script>
 </body>
 </html>
