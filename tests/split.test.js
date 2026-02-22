@@ -507,6 +507,48 @@ console.log('\nTest 18: paid uses fallbackRate; due/remaining use live rate');
     `receipt is rate-independent: due=${dDue.receipt?.toFixed(4)} paid=${dPaid.receipt?.toFixed(4)}`);
 }
 
+// 19. Integration: Lucileide and Jhemerson totals from expenses.json (after PR 16)
+//     E5: 1300.17 BRL, beneficiaries [Claudeane, Lucileide, Jhemerson], ✅
+//     E6:  799.14 BRL, beneficiaries [Claudeane, Lucileide, Jhemerson], ✅
+//     E11:  861.12 BRL, beneficiaries [Claudio, Claudeane, Lucileide],   ❌
+console.log('\nTest 19: Integration — Lucileide and Jhemerson totals (expenses.json after PR 16)');
+{
+  const expenses = [
+    { id: 'E5',  category: 'flight',  amount_chf: null, amount_brl: 1300.17,
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'], status: '✅ Payé' },
+    { id: 'E6',  category: 'flight',  amount_chf: null, amount_brl:  799.14,
+      beneficiaries: ['Claudeane', 'Lucileide', 'Jhemerson'], status: '✅ Payé' },
+    { id: 'E11', category: 'lodging', amount_chf: null, amount_brl:  861.12,
+      beneficiaries: ['Claudio', 'Claudeane', 'Lucileide'],   status: '❌ NON PAYÉ — à payer sur place' },
+  ];
+  const totals    = computeTotalSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+  const paidTotals = computePaidSummary(expenses, ALL_PEOPLE, PEOPLE_MAP);
+
+  // Lucileide: E5/3 + E6/3 + E11/3 (equal split each time)
+  const luciTotBrl  = 1300.17 / 3 + 799.14 / 3 + 861.12 / 3; // ≈ 986.81
+  const luciPaidBrl = 1300.17 / 3 + 799.14 / 3;               // ≈ 699.77  (E11 is ❌)
+  const luciRemBrl  = luciTotBrl - luciPaidBrl;                // ≈ 287.04
+
+  assert(approxEq(totals.Lucileide.brl, luciTotBrl, 1e-4),
+    `Lucileide tot.brl = ${totals.Lucileide.brl.toFixed(4)} (expected ${luciTotBrl.toFixed(4)})`);
+  assert(approxEq(paidTotals.Lucileide.brl, luciPaidBrl, 1e-4),
+    `Lucileide paid.brl = ${paidTotals.Lucileide.brl.toFixed(4)} (expected ${luciPaidBrl.toFixed(4)})`);
+  assert(approxEq(totals.Lucileide.brl - paidTotals.Lucileide.brl, luciRemBrl, 1e-4),
+    `Lucileide remaining = ${(totals.Lucileide.brl - paidTotals.Lucileide.brl).toFixed(4)} (expected ${luciRemBrl.toFixed(4)} ≈ 287.04)`);
+  assert(approxEq(totals.Lucileide.chf, 0, 1e-9),
+    `Lucileide tot.chf = ${totals.Lucileide.chf} (expected 0)`);
+
+  // Jhemerson: E5/3 + E6/3 (not in E11)
+  const jhemTotBrl  = 1300.17 / 3 + 799.14 / 3; // ≈ 699.77
+  const jhemPaidBrl = jhemTotBrl;                 // both E5 and E6 are ✅
+  assert(approxEq(totals.Jhemerson.brl, jhemTotBrl, 1e-4),
+    `Jhemerson tot.brl = ${totals.Jhemerson.brl.toFixed(4)} (expected ${jhemTotBrl.toFixed(4)})`);
+  assert(approxEq(paidTotals.Jhemerson.brl, jhemPaidBrl, 1e-4),
+    `Jhemerson paid.brl = ${paidTotals.Jhemerson.brl.toFixed(4)} (expected ${jhemPaidBrl.toFixed(4)})`);
+  assert(approxEq(totals.Jhemerson.brl - paidTotals.Jhemerson.brl, 0, 1e-4),
+    `Jhemerson remaining = ${(totals.Jhemerson.brl - paidTotals.Jhemerson.brl).toFixed(4)} (expected 0)`);
+}
+
 // ── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${passed + failed} test(s): ${passed} passed, ${failed} failed.\n`);
 if (failed > 0) process.exit(1);
