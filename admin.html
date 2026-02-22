@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
   <script type="module" src="assets/i18n.js"></script>
+  <style>
+    .admin-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: #d1fae5; color: #065f46; border-radius: .5rem;
+      padding: .35rem .8rem; font-weight: 600; font-size: .9rem;
+    }
+    .admin-badge img { width: 28px; height: 28px; border-radius: 50%; }
+    .worker-url-hint { font-size: .8rem; color: var(--text-light); margin-top: .5rem; }
+  </style>
 </head>
 <body>
   <nav>
@@ -34,42 +43,54 @@
       <p data-i18n="page.admin.subtitle">Gestion des données — accès réservé à l'administrateur.</p>
     </div>
 
-    <!-- Login form -->
-    <div id="admin-login" style="display:none">
-      <div class="card" style="max-width:420px;margin:0 auto">
+    <!-- Login panel -->
+    <div id="admin-login">
+      <div class="card" style="max-width:480px;margin:0 auto">
         <h2 data-i18n="admin.login.title">🔐 Connexion Admin</h2>
-        <p style="color:var(--text-light);font-size:.9rem;margin-bottom:1.25rem" data-i18n="admin.login.subtitle">Connectez-vous avec votre compte Supabase Admin.</p>
-        <form id="login-form">
-          <div class="form-group">
-            <label for="admin-email" data-i18n="admin.login.email">Email</label>
-            <input type="email" id="admin-email" placeholder="admin@example.com" required autocomplete="username">
-          </div>
-          <div class="form-group">
-            <label for="admin-pass" data-i18n="admin.login.pass">Mot de passe</label>
-            <input type="password" id="admin-pass" placeholder="••••••••" required autocomplete="current-password">
-          </div>
-          <div id="login-error" class="alert alert-danger" style="display:none;margin-bottom:.75rem"></div>
-          <button type="submit" class="btn btn-primary" style="width:100%" data-i18n="admin.login.btn">Se connecter</button>
-        </form>
+        <p style="color:var(--text-light);font-size:.9rem;margin-bottom:1.25rem" data-i18n="admin.login.subtitle">
+          Connectez-vous avec votre compte GitHub (réservé au propriétaire du dépôt).
+        </p>
+
+        <div id="worker-url-group" style="margin-bottom:1rem">
+          <label for="worker-url" style="font-weight:600;display:block;margin-bottom:.25rem" data-i18n="admin.login.workerUrl">
+            URL du Cloudflare Worker
+          </label>
+          <input type="url" id="worker-url" placeholder="https://voyage-br-2026-admin.YOUR_SUBDOMAIN.workers.dev"
+            style="width:100%;box-sizing:border-box" autocomplete="off">
+          <p class="worker-url-hint" data-i18n="admin.login.workerHint">
+            Déployez le Worker (voir README) puis collez l'URL ici. Enregistrée dans localStorage.
+          </p>
+        </div>
+
+        <button id="github-login-btn" class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.11.82-.26.82-.58v-2.03c-3.34.72-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.05.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.65.24 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span data-i18n="admin.login.githubBtn">Se connecter avec GitHub</span>
+        </button>
+
+        <div id="login-info" class="alert alert-info" style="display:none;margin-top:1rem"></div>
       </div>
     </div>
 
     <!-- Admin panel (shown when authenticated) -->
     <div id="admin-panel" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem">
-        <div class="alert alert-success" style="margin:0">
-          <span data-i18n="admin.connected">✅ Connecté en tant que</span> <strong id="admin-user"></strong>
+        <div class="admin-badge">
+          <img id="admin-avatar" src="" alt="" style="display:none">
+          <span data-i18n="admin.connected">✅ Mode Admin activé —</span>
+          <strong id="admin-user"></strong>
         </div>
         <button class="btn btn-outline btn-sm" id="logout-btn" data-i18n="admin.logout">Se déconnecter</button>
       </div>
 
       <!-- Tab nav -->
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
-        <button class="btn btn-primary admin-tab-btn active" data-tab="flights" data-i18n="admin.tab.flights">✈️ Vols</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="lodgings" data-i18n="admin.tab.lodgings">🏨 Hébergements</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="transport" data-i18n="admin.tab.transport">🚗 Transport</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="payments" data-i18n="admin.tab.payments">💰 Paiements</button>
-        <button class="btn btn-outline admin-tab-btn" data-tab="checklist" data-i18n="admin.tab.checklist">✅ Checklist</button>
+        <button class="btn btn-primary admin-tab-btn active" data-tab="flights"   data-i18n="admin.tab.flights">✈️ Vols</button>
+        <button class="btn btn-outline admin-tab-btn"        data-tab="lodgings"  data-i18n="admin.tab.lodgings">🏨 Hébergements</button>
+        <button class="btn btn-outline admin-tab-btn"        data-tab="transport" data-i18n="admin.tab.transport">🚗 Transport</button>
+        <button class="btn btn-outline admin-tab-btn"        data-tab="payments"  data-i18n="admin.tab.payments">💰 Paiements</button>
+        <button class="btn btn-outline admin-tab-btn"        data-tab="checklist" data-i18n="admin.tab.checklist">✅ Checklist</button>
       </div>
 
       <!-- Tab content -->
@@ -80,21 +101,9 @@
   </main>
 
   <footer>
-    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> <a href="https://supabase.com" target="_blank" style="color:rgba(255,255,255,.7)">Supabase</a></p>
+    <p><span data-i18n="footer.text">Voyage Brésil 2026 · Données gérées via</span> JSON</p>
   </footer>
 
-  <script src="assets/config.js" onerror="window.__configLoadError=true"></script>
   <script type="module" src="assets/admin.js"></script>
-
-  <script>
-    // Fix login-error visibility: show when text is set
-    const loginErrEl = document.getElementById('login-error');
-    if (loginErrEl) {
-      const observer = new MutationObserver(() => {
-        loginErrEl.style.display = loginErrEl.textContent ? 'flex' : 'none';
-      });
-      observer.observe(loginErrEl, { childList: true, characterData: true, subtree: true });
-    }
-  </script>
 </body>
 </html>

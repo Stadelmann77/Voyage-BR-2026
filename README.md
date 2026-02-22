@@ -14,126 +14,114 @@ Site web interactif hébergé sur GitHub Pages pour organiser le voyage familial
 |------|-------------|
 | `index.html` | Tableau de bord — résumé, voyageurs, alertes, itinéraire |
 | `flights.html` | Liste des vols avec globe 3D interactif |
-| `lodgings.html` | Hébergements avec détails et liens GPS |
+| `lodgings.html` | Hébergements avec détails et liens GPS / Google Maps |
 | `transport.html` | Location voiture Localiza |
-| `payments.html` | Résumé paiements par personne |
-| `contacts.html` | Contacts: compagnies, hôtels, urgences |
+| `payments.html` | Résumé paiements — répartition pondérée par personne |
+| `contacts.html` | Contacts: compagnies, hôtels, urgences (avec liens Google Maps) |
 | `checklist.html` | Checklist collaborative (PIN protégé) |
-| `admin.html` | Administration (authentification Supabase) |
+| `admin.html` | Administration (authentification GitHub OAuth via Cloudflare Worker) |
 
 ---
 
-## 📴 Mode hors-ligne (CSV)
+## 🗄️ Architecture données Git-based
 
-Si `assets/config.js` est absent ou contient les valeurs placeholder, le site fonctionne **automatiquement en mode hors-ligne** : les données sont chargées depuis le fichier `BD source voyage BR 2026.csv` inclus dans le repo.
+Toutes les données sont stockées dans des fichiers JSON versionnés sous `data/` :
 
-### Ce qui fonctionne en mode hors-ligne
+| Fichier | Description |
+|---------|-------------|
+| `data/flights.json`     | Vols (passagers, routes, prix, statut, sièges, bagages) |
+| `data/lodgings.json`    | Hébergements (dates, prix, statut, GPS) |
+| `data/transport.json`   | Location voiture (dates, prix, statut) |
+| `data/contacts.json`    | Contacts avec coordonnées GPS / Google Maps |
+| `data/travellers.json`  | Liste des voyageurs |
+| `data/people.json`      | Voyageurs avec **poids de pondération** pour la répartition des dépenses |
+| `data/expenses.json`    | Dépenses détaillées avec bénéficiaires et catégories |
+| `data/checklist.json`   | Checklist collaborative |
+| `data/parameters.json`  | Paramètres (taux de change de secours, PIN surprise) |
 
-| Page | Comportement |
-|------|-------------|
-| `index.html` | Affiche voyageurs + alertes + itinéraire depuis CSV |
-| `flights.html` | Liste des vols + globe 3D (coordonnées d'aéroports intégrées) |
-| `lodgings.html` | Tous les hébergements depuis CSV |
-| `transport.html` | Location voiture depuis CSV |
-| `contacts.html` | Tous les contacts depuis CSV |
-| `checklist.html` | Checklist avec état persisté dans `localStorage` (par appareil) |
-| `payments.html` | Message explicatif — totaux par personne nécessitent Supabase |
+### Modèle de pondération (payments)
 
-Un bandeau **📴 Mode hors-ligne (CSV) — Supabase non configuré** s'affiche en haut de chaque page.
+Chaque voyageur a un **poids** défini dans `data/people.json` :
 
-### Activer Supabase plus tard
+| Personne  | Poids |
+|-----------|-------|
+| Claudio   | 1.0   |
+| Claudeane | 1.0   |
+| Lucileide | 1.0   |
+| Jhemerson | 0.5   |
 
-Suivez les étapes de la section **⚙️ Configuration** ci-dessous pour activer la synchronisation temps réel, la checklist partagée et les paiements par personne.
+La quote-part de chaque bénéficiaire pour une dépense = `(poids_personne / somme_poids_bénéficiaires) × montant`.
+
+### Taux de change CHF/BRL
+
+Le taux est récupéré **en temps réel** depuis une API publique lors du chargement de la page Paiements :
+1. Essai : `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/chf.json`
+2. Fallback : `https://api.exchangerate-api.com/v4/latest/CHF`
+3. Fallback ultime : valeur stockée dans `data/parameters.json` (`chf_brl_rate`)
 
 ---
 
-## ⚙️ Configuration
+## 🔐 Admin — Authentification GitHub OAuth
 
-### 1. Créer votre projet Supabase
+L'administration est protégée via **GitHub OAuth** et un **Cloudflare Worker**.
 
-1. Allez sur [https://supabase.com](https://supabase.com) et créez un projet.
-2. Notez votre **Project URL** et **anon (public) key** dans *Settings → API*.
+Le site fonctionne entièrement **en mode lecture** sans Worker. Les contrôles d'édition n'apparaissent qu'après authentification.
 
-### 2. Appliquer le schéma SQL
+### Déployer le Worker
 
-Dans le **SQL Editor** de Supabase, exécutez le contenu de [`supabase/schema.sql`](supabase/schema.sql).
+#### Prérequis
 
-### 3. Configurer les secrets
+- [Compte Cloudflare](https://dash.cloudflare.com/) (plan gratuit suffisant)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) : `npm install -g wrangler`
+- Une **GitHub OAuth App** (voir ci-dessous)
 
-Ajoutez ces secrets dans Supabase (**Settings → Edge Functions → Secrets**):
-- `SURPRISE_PIN` — PIN pour déverrouiller la section surprise
-- `CHECKLIST_PIN` — PIN pour cocher les items de la checklist
+#### 1. Créer une GitHub OAuth App
 
-Ces PINs ne sont **jamais** stockés dans le repo.
+1. Allez dans *GitHub → Settings → Developer settings → OAuth Apps → New OAuth App*
+2. Remplissez :
+   - **Application name** : `Voyage BR 2026 Admin`
+   - **Homepage URL** : `https://stadelmann77.github.io/Voyage-BR-2026`
+   - **Authorization callback URL** : `https://voyage-br-2026-admin.YOUR_SUBDOMAIN.workers.dev/auth/callback`
+3. Notez le **Client ID** et générez un **Client Secret**
 
-### 4. Déployer les Edge Functions
+#### 2. Déployer le Worker
 
 ```bash
-npm install -g supabase
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-
-supabase functions deploy verify-surprise-pin --no-verify-jwt
-supabase functions deploy update-checklist --no-verify-jwt
+cd cloudflare-worker
+wrangler login
+wrangler deploy
 ```
 
-### 5. Configurer le frontend
+#### 3. Configurer les secrets
 
 ```bash
-cp assets/config.example.js assets/config.js
+wrangler secret put GITHUB_CLIENT_ID      # Client ID de l'OAuth App
+wrangler secret put GITHUB_CLIENT_SECRET  # Client Secret
+wrangler secret put JWT_SECRET            # Chaîne aléatoire ≥ 32 caractères (ex: openssl rand -base64 32)
 ```
 
-Éditez `assets/config.js`:
-```js
-window.SUPABASE_URL  = 'https://YOUR_PROJECT_REF.supabase.co';
-window.SUPABASE_ANON = 'YOUR_ANON_KEY_HERE';
+#### 4. Mettre à jour le callback URL GitHub
+
+Après le déploiement, mettez à jour l'OAuth App GitHub avec l'URL réelle du Worker :
+`https://<worker-name>.<subdomain>.workers.dev/auth/callback`
+
+#### 5. Utiliser l'admin
+
+1. Allez sur `admin.html`
+2. Collez l'URL du Worker dans le champ dédié
+3. Cliquez **Se connecter avec GitHub**
+4. Approuvez l'autorisation GitHub → vous serez redirigé vers l'admin
+
+---
+
+## 📍 Google Maps
+
+Les pages **Hébergements** et **Contacts** affichent automatiquement un lien **📍 Maps** pour les entrées disposant de coordonnées GPS (`lat`/`lon`).
+
+Pour ajouter un lien Maps à un contact, ajoutez `lat` et `lon` dans `data/contacts.json` :
+```json
+{ "id": "C5", "organization": "...", "lat": -23.56155, "lon": -46.63295, ... }
 ```
-
-> ⚠️ `assets/config.js` est dans `.gitignore` — ne le commitez jamais!
-
-### 6. Activer GitHub Pages
-
-1. Allez dans *Settings → Pages* de votre repo.
-2. Source: branche `main`, dossier racine `/`.
-3. Le site sera disponible sur `https://stadelmann77.github.io/Voyage-BR-2026/`.
-
----
-
-## 🌐 Changement de langue
-
-Le site supporte **Français (FR)** et **Português-BR (PT)**.
-
-- Cliquez sur les boutons **FR** / **PT** dans la barre de navigation pour changer la langue.
-- Le choix est persisté dans `localStorage` et s'applique à toutes les pages.
-- La langue par défaut est le **Français**.
-
----
-
-## 🔧 Dépannage
-
-### Spinners infinis / données non chargées
-
-Si les pages affichent des spinners infinis ou un bandeau d'erreur de configuration:
-
-1. **`assets/config.js` manquant** — Copiez `assets/config.example.js` → `assets/config.js` et remplissez vos clés Supabase.
-2. **Clés placeholder** — Vérifiez que `SUPABASE_URL` et `SUPABASE_ANON` ne contiennent plus les valeurs d'exemple.
-3. **Fichier servi localement** — Ouvrez directement `index.html` ne fonctionne pas (modules ES). Utilisez `npx serve .` ou `python -m http.server`.
-4. **Erreurs RLS** — Vérifiez que les politiques RLS dans Supabase autorisent la lecture publique (anon) pour les tables utilisées.
-
-### Mode débogage
-
-Ajoutez `?debug=1` à n'importe quelle URL pour afficher des détails d'erreur supplémentaires (stack trace, payload de réponse) dans une section dépliable sous les messages d'erreur.
-
-Exemple: `https://stadelmann77.github.io/Voyage-BR-2026/flights.html?debug=1`
-
----
-
-## 🔐 Sécurité
-
-- **Clé anon Supabase** uniquement dans le frontend (publique par design, protégée par RLS).
-- **PINs** jamais stockés dans le repo — vérifiés côté serveur via les Edge Functions.
-- **Admin** protégé par Supabase Auth (email + mot de passe).
-- **Données surprises** cachées par défaut via RLS et révélées uniquement après vérification PIN serveur.
 
 ---
 
@@ -141,49 +129,69 @@ Exemple: `https://stadelmann77.github.io/Voyage-BR-2026/flights.html?debug=1`
 
 ```
 Voyage-BR-2026/
-├── index.html          # Dashboard
-├── flights.html        # Vols + globe 3D
-├── lodgings.html       # Hébergements
-├── transport.html      # Transport
-├── payments.html       # Paiements par personne
-├── contacts.html       # Contacts
-├── checklist.html      # Checklist collaborative
-├── admin.html          # Administration
+├── index.html
+├── flights.html
+├── lodgings.html
+├── transport.html
+├── payments.html          # Répartition pondérée + taux CHF/BRL temps réel
+├── contacts.html          # Liens Google Maps intégrés
+├── checklist.html
+├── admin.html             # Admin GitHub OAuth
+├── data/
+│   ├── flights.json
+│   ├── lodgings.json
+│   ├── transport.json
+│   ├── contacts.json      # lat/lon ajoutés pour les hôtels
+│   ├── travellers.json
+│   ├── people.json        # Poids de pondération par personne (NEW)
+│   ├── expenses.json      # Dépenses avec bénéficiaires (NEW)
+│   ├── checklist.json
+│   └── parameters.json
 ├── assets/
-│   ├── config.example.js    # Template de config (copier → config.js)
-│   ├── config.js            # ⚠️ Gitignored — vos clés Supabase
-│   ├── supabaseClient.js    # Client Supabase + URL fonctions
-│   ├── csvData.js           # Parser CSV + données hors-ligne (aéroports, checklist)
-│   ├── styles.css           # Styles globaux
-│   ├── public.js            # Helpers partagés (fetch, render, erreurs) — routing online/offline
-│   ├── i18n.js              # Module i18n — t(), setLang(), toggle
+│   ├── styles.css
+│   ├── public.js          # Helpers partagés (fetchExpenses, fetchPeople...)
+│   ├── admin.js           # Admin GitHub OAuth + CRUD Git-based
+│   ├── i18n.js
 │   ├── i18n/
-│   │   ├── fr.js            # Traductions françaises
-│   │   └── pt-BR.js         # Traductions portugaises (BR)
-│   ├── flights.js           # Globe 3D + surprise PIN
-│   ├── checklist.js         # Checklist PIN-protégée
-│   └── admin.js             # Admin CRUD
-├── supabase/
-│   ├── schema.sql           # Schéma DB + seed data + RLS
-│   ├── README.md            # Guide Supabase complet
-│   └── functions/
-│       ├── verify-surprise-pin/index.ts
-│       └── update-checklist/index.ts
+│   │   ├── fr.js
+│   │   └── pt-BR.js
+│   ├── flights.js
+│   └── checklist.js
+├── cloudflare-worker/     # NEW — Backend admin
+│   ├── index.js           # Cloudflare Worker (GitHub OAuth + Git commits)
+│   └── wrangler.toml      # Config Worker
 └── README.md
 ```
 
 ---
 
-## 📊 Données source
+## 🌐 Changement de langue
 
-Les données initiales sont importées depuis `BD source voyage BR 2026.csv` via le seed SQL dans `supabase/schema.sql`.
+Le site supporte **Français (FR)** et **Português-BR (PT)**.
 
-Ce même fichier CSV sert de source de données en **mode hors-ligne** : `assets/csvData.js` le parse automatiquement lorsque Supabase n'est pas configuré.
+- Cliquez sur **FR** / **PT** dans la barre de navigation.
+- Le choix est persisté dans `localStorage`.
+- La langue par défaut est le **Français**.
 
 ---
 
-## 🛠️ Technologies
+## 🔧 Développement local
 
-- **Frontend**: HTML5, CSS3, JavaScript ES modules (pas de build, compatible GitHub Pages)
-- **Globe 3D**: [globe.gl](https://globe.gl/) + Three.js
-- **Backend**: [Supabase](https://supabase.com/) (PostgreSQL + RLS + Edge Functions + Auth)
+```bash
+# Servir le site localement (ES modules require HTTP server)
+npx serve .
+# ou
+python -m http.server 8080
+```
+
+Puis ouvrez `http://localhost:8080`.
+
+---
+
+## 🔐 Sécurité
+
+- **Aucun secret** dans le repo.
+- **Admin** restreint à l'utilisateur GitHub `Stadelmann77` (vérifié côté Worker).
+- **JWT** signé HS256, valide 8 heures, stocké en `sessionStorage` (jamais en cookie ou localStorage permanent).
+- **Commits Git** créés via l'API GitHub avec le token OAuth de l'utilisateur — traçabilité complète.
+- Le site fonctionne entièrement **en lecture seule** sans Worker.

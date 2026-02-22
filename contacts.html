@@ -103,6 +103,7 @@
                     ${c.address_web && c.address_web.startsWith('http') || (c.address_web || '').includes('.')
                       ? `<a href="${c.address_web.startsWith('http') ? '' : 'https://'}${escHtml(c.address_web)}" target="_blank">${escHtml(c.address_web)}</a>`
                       : escHtml(c.address_web || '—')}
+                    ${c.lat && c.lon ? ` <a href="https://www.google.com/maps?q=${c.lat},${c.lon}" target="_blank" style="white-space:nowrap">${t('lodgings.maps')}</a>` : ''}
                   </td>
                   <td><small style="color:var(--text-light)">${escHtml(c.notes || '')}</small></td>
                 </tr>`).join('')}
